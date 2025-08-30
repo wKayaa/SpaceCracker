@@ -45,11 +45,31 @@
 
 > ⚠️ **FOR AUTHORIZED TESTING ONLY** - Only use on systems you own or have explicit permission to test
 
+## 🚀 Super Simple Usage
+
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+
+# 2. Run a quick scan (easiest way)
+./spacecracker_simple demo_targets.txt
+
+# 3. Preview what it would do (dry run)
+./spacecracker_simple demo_targets.txt --dry-run
+
+# 4. Scan your own targets
+echo "https://your-target.com" > my_targets.txt
+./spacecracker_simple my_targets.txt
+
+# 5. For guided setup
+python launch.py --interactive
+```
+
 ---
 
-## 🚀 Quick Start (v3.1)
+## 🚀 Advanced Usage
 
-### One-Command Launch (New!)
+### Quick Commands
 ```bash
 # Quick scan with auto-optimization
 python launch.py run targets.txt
@@ -60,17 +80,17 @@ python launch.py run domains.txt --language=en --performance-mode=high
 # French interface with custom threading  
 python launch.py run targets.txt --language=fr --threads=32
 
-# Advanced scan with all optimizations
-python launch.py run targets.txt --performance-mode=high --language=en --dry-run
+# Show scan plan without executing
+python launch.py run targets.txt --dry-run
 ```
 
-### Interactive Mode (Classic)
+### Interactive Mode
 ```bash
-python launch.py
+python launch.py --interactive
 # Launches interactive wizard - perfect for first-time users
 ```
 
-### CLI Mode (Traditional)
+### Traditional CLI Mode
 ```bash
 # Target a single URL
 python launch.py --targets https://example.com --language=fr
@@ -239,8 +259,10 @@ Integration:
 ```
 spacecracker/
 ├── launch.py                 # Universal entrypoint
+├── spacecracker_simple       # Simple launcher (easiest)
 ├── spacecracker/
 │   ├── __init__.py
+│   ├── __main__.py          # Module entry point
 │   ├── version.py           
 │   ├── cli.py               # CLI interface & wizard
 │   ├── core/
@@ -274,7 +296,25 @@ spacecracker/
 git clone https://github.com/wKayaa/SpaceCracker.git
 cd SpaceCracker
 pip install -r requirements.txt
-chmod +x launch.py
+chmod +x launch.py spacecracker_simple
+```
+
+### Three Ways to Launch
+```bash
+# 1. Simplest way (recommended for quick scans)
+./spacecracker_simple targets.txt
+
+# 2. Full CLI interface
+python launch.py run targets.txt
+
+# 3. As Python module  
+python -m spacecracker run targets.txt
+```
+
+### Quick Test
+```bash
+# Test with demo target
+./spacecracker_simple demo_targets.txt --dry-run
 ```
 
 ### Generate Sample Targets
