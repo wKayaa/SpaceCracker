@@ -1,210 +1,320 @@
-# SpaceCracker - Advanced Web Vulnerability Scanner
+# SpaceCracker
 
-SpaceCracker is a comprehensive Python tool designed for mass scanning of websites and IPs with multiple exploit modules, secret extraction, and validation capabilities.
-
-## Features
-
-### 🔍 **Scanning Modules**
-- **GGB Scanner**: Cloud storage bucket detection (AWS S3, GCS, Azure, MinIO)
-- **JS Scanner**: JavaScript file analysis and secret extraction
-- **Git Scanner**: Exposed version control systems (.git, .svn, .hg)
-- **CVE Exploits**: 2024-2025 CVE database with automated exploitation
-- **Path Scanner**: Comprehensive vulnerable path testing
-
-### 🔐 **Secret Extraction & Validation**
-- **Regex Patterns**: 50+ secret types (AWS, SendGrid, GitHub, Stripe, etc.)
-- **Live Validation**: Automated API testing for extracted secrets
-- **Multi-Service Support**: SMTP, database URLs, JWT tokens, and more
-
-### 📊 **Reporting & Notifications**
-- **Multiple Formats**: JSON, TXT, CSV, and executive summaries
-- **Telegram Integration**: Real-time notifications for validated findings
-- **Risk Assessment**: Automated severity classification
-
-### ⚡ **Performance & OpSec**
-- **Rate Limiting**: Configurable requests per second
-- **Threading**: Concurrent scanning with customizable thread count
-- **Random Delays**: OpSec-friendly scanning patterns
-- **Exponential Backoff**: Intelligent retry mechanisms
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/wKayaa/SpaceCracker.git
-cd SpaceCracker
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Make executable
-chmod +x scanner.py
+```
+   _____                     _____                _             
+  / ____|                   / ____|              | |            
+ | (___   __ _ _ __   ___  | |     _ __ __ _  ___| | _____ _ __ 
+  \___ \ / _` | '_ \ / _ \ | |    | '__/ _` |/ __| |/ / _ \ '__|
+   ___) | (_| | |_) |  __/ | |____| |  | (_| | (__|   <  __/ |   
+  |____/ \__,_| .__/ \___|  \_____|_|   \__,_|\___|_|\_\___/|_|   
+              | |                                                
+              |_|                                                
 ```
 
-## Quick Start
+**Advanced Modular Web Exposure & Secret Discovery Toolkit (Defensive Use Only)**
 
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/wKayaa/SpaceCracker)
+[![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
+> ⚠️ **FOR AUTHORIZED TESTING ONLY** - Only use on systems you own or have explicit permission to test
+
+---
+
+## 🚀 Quick Start
+
+### Interactive Mode (Default)
+```bash
+python launch.py
+# Launches interactive wizard - perfect for first-time users
+```
+
+### CLI Mode
 ```bash
 # Basic scan
-python scanner.py -t targets.txt
+python launch.py --targets targets.txt
 
-# Scan with specific modules
-python scanner.py -t targets.txt --modules ggb js git
+# Specific modules with custom settings
+python launch.py --targets targets.txt --modules js_scanner,git_scanner --threads 20
 
-# Custom threading and rate limiting
-python scanner.py -t targets.txt --threads 20 --rate-limit 5
-
-# Enable Telegram notifications
-python scanner.py -t targets.txt --telegram
-
-# Custom paths and output
-python scanner.py -t targets.txt -p custom_paths.txt -o results/
+# All modules with Telegram notifications
+python launch.py --targets targets.txt --modules all --telegram
 ```
 
-## Configuration
+## 📋 Features
 
-Edit `config.json` to customize:
+### 🔍 **Modular Scanner Architecture**
+- **Auto-Discovery**: Modules automatically registered from `spacecracker/modules/`
+- **Standardized Interface**: All modules implement `BaseModule` with consistent `run()` method
+- **Pluggable Design**: Drop new modules in directory - no code changes needed
 
+### 🧪 **Available Modules**
+- **`js_scanner`**: JavaScript secrets & API key extraction
+- **`git_scanner`**: Exposed Git metadata detection (.git/)  
+- **`ggb_scanner`**: Generic/Global bucket exposure detection
+- **`cve_k8s_podescape_2024_3177`**: K8s pod escape vulnerability check (passive)
+
+### 📊 **Standardized Reporting**
+- **JSON**: Machine-readable results with full evidence
+- **TXT**: Human-readable summary reports
+- **CSV**: Tabular data for spreadsheet analysis
+- **Severity Classification**: Low/Medium/High/Critical
+
+### ⚡ **Performance & OpSec**  
+- **Rate Limiting**: Token bucket implementation with burst support
+- **Threading**: Concurrent scanning with configurable workers
+- **Config-Driven**: JSON configuration for all parameters
+- **Telegram Integration**: Real-time notifications for critical findings
+---
+
+## 📁 Project Structure
+
+```
+spacecracker/
+├── launch.py                 # Universal entrypoint
+├── spacecracker/
+│   ├── __init__.py
+│   ├── version.py           
+│   ├── cli.py               # CLI interface & wizard
+│   ├── core/
+│   │   ├── config.py        # Configuration management
+│   │   ├── registry.py      # Module auto-discovery
+│   │   ├── runner.py        # Scan orchestration
+│   │   ├── reporting.py     # Multi-format reports
+│   │   └── rate_limiter.py  # Token bucket rate limiting
+│   ├── modules/
+│   │   ├── base.py          # BaseModule interface
+│   │   ├── js_scanner.py    # JavaScript secrets
+│   │   ├── git_scanner.py   # Git exposure
+│   │   ├── ggb_scanner.py   # Storage buckets
+│   │   └── cve_*.py         # CVE modules
+│   └── utils/
+│       ├── http.py          # HTTP utilities
+│       └── text.py          # Text processing
+├── configs/
+│   └── config.example.json  # Example configuration
+├── results/                 # Scan output directory
+├── tests/                   # Test suite
+└── scripts/                 # Helper scripts
+```
+
+---
+
+## 🛠 Installation & Setup
+
+### Clone & Install
+```bash
+git clone https://github.com/wKayaa/SpaceCracker.git
+cd SpaceCracker
+pip install -r requirements.txt
+chmod +x launch.py
+```
+
+### Generate Sample Targets
+```bash
+./scripts/generate_sample_targets.sh
+```
+
+### Docker Support
+```bash
+docker-compose up --build
+```
+
+---
+
+## 📖 Usage Examples
+
+### Interactive Wizard
+```bash
+python launch.py
+# Follow prompts to configure scan
+```
+
+### CLI Examples
+```bash
+# List available modules
+python launch.py --list-modules
+
+# Dry run (show plan without execution)
+python launch.py --targets targets.txt --dry-run
+
+# Quick scan with specific modules
+python launch.py --targets https://example.com --modules js_scanner,git_scanner
+
+# High-performance scan
+python launch.py --targets targets.txt --threads 50 --rate-limit 10
+
+# Custom output and formats
+python launch.py --targets targets.txt --output-dir results_2024 --formats json,csv
+```
+
+### Configuration File
+```bash
+# Use custom config
+python launch.py --config configs/my_config.json --targets targets.txt
+```
+---
+
+## ⚙️ Configuration
+
+Example `config.json`:
 ```json
 {
-  "scanner": {
-    "threads": 10,
-    "rate_limit": 2,
-    "timeout": 10,
-    "max_retries": 3
+  "threads": 50,
+  "rate_limit": {
+    "requests_per_second": 10,
+    "burst": 20
   },
-  "modules": {
-    "ggb_scanner": true,
-    "js_scanner": true,
-    "git_scanner": true,
-    "cve_exploits": true
+  "modules": ["js_scanner", "git_scanner", "ggb_scanner"],
+  "secrets": {
+    "patterns": [
+      {"name": "AWS Access Key", "regex": "AKIA[0-9A-Z]{16}"},
+      {"name": "GitHub Token", "regex": "ghp_[a-zA-Z0-9]{36}"}
+    ],
+    "entropy_min": 4.0
   },
   "telegram": {
-    "bot_token": "YOUR_BOT_TOKEN",
-    "chat_id": "YOUR_CHAT_ID"
+    "enabled": false,
+    "bot_token": "env:TELEGRAM_BOT_TOKEN",
+    "chat_id": "env:TELEGRAM_CHAT_ID",
+    "notify_severity_min": "High"
+  },
+  "outputs": {
+    "directory": "results",
+    "formats": ["json", "txt", "csv"]
   }
 }
 ```
 
-## Modules
+---
 
-### GGB Scanner
-Detects exposed cloud storage buckets across multiple providers:
-- Amazon S3
-- Google Cloud Storage
-- Azure Blob Storage
-- MinIO instances
+## 🔌 Extending with New Modules
 
-### JavaScript Scanner
-Analyzes JS files for:
-- API keys and tokens
-- Database URLs
-- Internal endpoints
-- Email addresses
-- Development artifacts
+### Create a New Module
+```python
+# spacecracker/modules/my_scanner.py
+from .base import BaseModule
 
-### Git Scanner
-Finds exposed version control:
-- Git repositories (.git/)
-- Subversion (.svn/)
-- Mercurial (.hg/)
-- Extracts commit history and configuration
-
-### CVE Exploits
-Tests for recent vulnerabilities:
-- Kubernetes exposures (CVE-2024-3177, CVE-2024-4068)
-- NGINX auth bypass (CVE-2024-7646)
-- MinIO authentication issues (CVE-2024-8572)
-- Docker daemon exposures
-- Generic API endpoints
-
-## Secret Types Supported
-
-- **AWS**: Access keys, secret keys, session tokens
-- **SendGrid**: API keys
-- **Mailgun**: API keys
-- **Twilio**: Account SIDs and auth tokens
-- **Stripe**: API keys (live/test)
-- **GitHub/GitLab**: Personal access tokens
-- **Slack/Discord**: Bot tokens and webhooks
-- **Database URLs**: MongoDB, MySQL, PostgreSQL, Redis
-- **SMTP**: Credentials and configurations
-- **JWT**: Tokens with payload analysis
-- **SSH**: Private keys
-- **Generic**: API keys, bearer tokens, passwords
-
-## Validation
-
-SpaceCracker validates extracted secrets by:
-- Making authenticated API calls
-- Testing database connections
-- Verifying SMTP credentials
-- Analyzing JWT token validity
-- AWS STS identity verification
-
-## Output Formats
-
-### JSON Report
-Detailed machine-readable results with full metadata.
-
-### Text Report
-Human-readable summary with severity-based grouping.
-
-### CSV Export
-Validated secrets in spreadsheet format.
-
-### Executive Summary
-High-level risk assessment and recommendations.
-
-## Telegram Integration
-
-Set up notifications:
-1. Create a Telegram bot via [@BotFather](https://t.me/botfather)
-2. Get your chat ID from [@userinfobot](https://t.me/userinfobot)
-3. Configure in `config.json`
-4. Enable with `--telegram` flag
-
-## Performance Tuning
-
-For powerful VPS deployments:
-
-```bash
-# High-performance scanning
-python scanner.py -t targets.txt --threads 50 --rate-limit 10
-
-# Large-scale assessment
-python scanner.py -t targets.txt --threads 100 --rate-limit 20 -o results_$(date +%Y%m%d)
+class MyScanner(BaseModule):
+    module_id = "my_scanner"
+    name = "My Custom Scanner"
+    description = "Custom vulnerability scanner"
+    
+    async def run(self, target, config, context):
+        return {
+            "module_id": self.module_id,
+            "target": target,
+            "findings": [
+                {
+                    "id": "finding_1",
+                    "title": "Custom Finding",
+                    "severity": "Medium",
+                    "category": "exposure", 
+                    "confidence": 0.8,
+                    "description": "Found something interesting",
+                    "evidence": {"url": target},
+                    "recommendation": "Fix this issue"
+                }
+            ],
+            "errors": []
+        }
 ```
 
-## OpSec Considerations
-
-- Random delays between requests
-- Configurable User-Agent strings
-- Rate limiting to avoid detection
-- Exponential backoff on failures
-- Telegram notifications for stealth
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Add your exploit modules in `modules/`
-4. Update patterns in `utils/regex_patterns.py`
-5. Submit a pull request
-
-## Legal Disclaimer
-
-This tool is for authorized security testing only. Users are responsible for complying with applicable laws and obtaining proper authorization before scanning any systems they do not own.
-
-## License
-
-MIT License - see LICENSE file for details.
-
-## Support
-
-- 🐛 **Issues**: [GitHub Issues](https://github.com/wKayaa/SpaceCracker/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/wKayaa/SpaceCracker/discussions)
-- 📧 **Contact**: security@spacecracker.dev
+Module will be automatically discovered and available via `--list-modules`!
 
 ---
 
-**SpaceCracker v1.0.0** - Ready to crack the space between security and discovery! 🚀
+## 📊 Sample Output
+
+### JSON Report Structure
+```json
+{
+  "metadata": {
+    "started_at": "2024-01-15 10:30:45",
+    "finished_at": "2024-01-15 10:35:20", 
+    "targets": 3,
+    "modules": ["js_scanner", "git_scanner"],
+    "version": "0.1.0"
+  },
+  "summary": {
+    "total_findings": 5,
+    "by_severity": {"High": 2, "Medium": 2, "Low": 1},
+    "errors": 0
+  },
+  "findings": [...]
+}
+```
+
+### Text Report Preview
+```
+================================================================================
+SPACECRACKER SCAN RESULTS
+================================================================================
+Started: 2024-01-15 10:30:45
+Targets: 3
+Modules: js_scanner, git_scanner
+
+SUMMARY
+----------------------------------------
+Total Findings: 5
+Severity Breakdown:
+  High: 2
+  Medium: 2
+  Low: 1
+```
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run config tests
+python tests/test_config.py
+
+# Run registry tests  
+python tests/test_registry.py
+
+# Test CLI functionality
+python launch.py --version
+python launch.py --list-modules
+python launch.py --targets test_target.txt --dry-run
+```
+
+---
+
+## 📱 Telegram Integration
+
+1. Create bot with [@BotFather](https://t.me/botfather)
+2. Get chat ID from [@userinfobot](https://t.me/userinfobot)  
+3. Set environment variables:
+```bash
+export TELEGRAM_BOT_TOKEN="your_bot_token"
+export TELEGRAM_CHAT_ID="your_chat_id"
+```
+4. Enable in config or use `--telegram` flag
+
+---
+
+## ⚠️ Legal & Compliance
+
+- **Authorization Required**: User must confirm they have permission during interactive wizard
+- **Defensive Only**: No active exploit payloads - only passive checks and safe validation
+- **Disclaimer**: Tool includes clear usage warnings and authorization prompts
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create feature branch (`git checkout -b feature/my-module`)
+3. Add your module in `spacecracker/modules/my_module.py`
+4. Add tests in `tests/`
+5. Submit pull request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+**Star ⭐ this repository if it helps your security assessments!**
