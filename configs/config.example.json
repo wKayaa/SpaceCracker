@@ -1,0 +1,45 @@
+{
+  "threads": 50,
+  "rate_limit": {
+    "requests_per_second": 10,
+    "burst": 20
+  },
+  "modules": ["js_scanner", "git_scanner", "ggb_scanner"],
+  "secrets": {
+    "patterns": [
+      {
+        "name": "AWS Access Key",
+        "regex": "AKIA[0-9A-Z]{16}"
+      },
+      {
+        "name": "GitHub Token", 
+        "regex": "ghp_[a-zA-Z0-9]{36}"
+      },
+      {
+        "name": "Stripe API Key",
+        "regex": "sk_live_[0-9a-zA-Z]{24}"
+      },
+      {
+        "name": "SendGrid API Key",
+        "regex": "SG\\.[a-zA-Z0-9_\\-\\.]{66}"
+      }
+    ],
+    "entropy_min": 4.0
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "env:TELEGRAM_BOT_TOKEN",
+    "chat_id": "env:TELEGRAM_CHAT_ID",
+    "notify_severity_min": "High"
+  },
+  "opsec": {
+    "random_delay_ms": [50, 250],
+    "rotate_user_agents": true,
+    "proxy_list_file": null,
+    "respect_robots_txt": true
+  },
+  "outputs": {
+    "directory": "results",
+    "formats": ["json", "txt", "csv"]
+  }
+}
