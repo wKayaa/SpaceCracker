@@ -128,21 +128,32 @@ def evyl_run_command(args):
     telegram = False
     dry_run = False
     
+    # Parse arguments manually for evyl run command
     i = 1
     while i < len(args):
-        if args[i] == '--language' and i + 1 < len(args):
+        arg = args[i]
+        if arg.startswith('--language='):
+            language = arg.split('=', 1)[1]
+            i += 1
+        elif arg == '--language' and i + 1 < len(args):
             language = args[i + 1]
             i += 2
-        elif args[i] == '--performance-mode' and i + 1 < len(args):
+        elif arg.startswith('--performance-mode='):
+            performance_mode = arg.split('=', 1)[1]
+            i += 1
+        elif arg == '--performance-mode' and i + 1 < len(args):
             performance_mode = args[i + 1]
             i += 2
-        elif args[i] == '--threads' and i + 1 < len(args):
+        elif arg.startswith('--threads='):
+            threads = int(arg.split('=', 1)[1])
+            i += 1
+        elif arg == '--threads' and i + 1 < len(args):
             threads = int(args[i + 1])
             i += 2
-        elif args[i] == '--telegram':
+        elif arg == '--telegram':
             telegram = True
             i += 1
-        elif args[i] == '--dry-run':
+        elif arg == '--dry-run':
             dry_run = True
             i += 1
         else:
