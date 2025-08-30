@@ -1,4 +1,4 @@
-# SpaceCracker v3.1 (Evyl-Compatible)
+# SpaceCracker v3.1
 
 ```
    _____                     _____                _             
@@ -32,12 +32,12 @@
 - **Better Error Handling**: Improved error messages and recovery
 
 🎯 **Usability Enhancements**
-- **One-Command Launch**: Simple `evyl run targets.txt` for instant scanning
+- **One-Command Launch**: Simple `python launch.py run targets.txt` for instant scanning
 - **Auto-Configuration**: Intelligent defaults based on system capabilities
 - **Progress Throttling**: Reduced CPU overhead during high-frequency scans
 - **Memory Monitoring**: Real-time memory usage tracking and optimization
 
-**Advanced Laravel & Email Security Framework (Evyl-Compatible)**
+**Advanced Laravel & Email Security Framework**
 
 [![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/wKayaa/SpaceCracker)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://python.org)
@@ -52,16 +52,16 @@
 ### One-Command Launch (New!)
 ```bash
 # Quick scan with auto-optimization
-python evyl.py run targets.txt
+python launch.py run targets.txt
 
 # High-performance scan with English UI
-python evyl.py run domains.txt --language=en --performance-mode=high
+python launch.py run domains.txt --language=en --performance-mode=high
 
 # French interface with custom threading  
-python evyl.py run targets.txt --language=fr --threads=32
+python launch.py run targets.txt --language=fr --threads=32
 
 # Advanced scan with all optimizations
-python evyl.py run targets.txt --performance-mode=high --language=en --dry-run
+python launch.py run targets.txt --performance-mode=high --language=en --dry-run
 ```
 
 ### Interactive Mode (Classic)
@@ -141,19 +141,19 @@ python launch.py --targets large_targets.txt --performance-mode=high --threads=1
 
 ## 📖 Usage Examples (v3.1)
 
-### Evyl-Style Commands (New!)
+### Quick Commands
 ```bash
 # List available modules
-python evyl.py --list-modules
+python launch.py --list-modules
 
 # Quick scan with auto-configuration  
-python evyl.py run targets.txt
+python launch.py run targets.txt
 
 # High-performance French interface
-python evyl.py run targets.txt --language=fr --performance-mode=high
+python launch.py run targets.txt --language=fr --performance-mode=high
 
 # Dry run to see execution plan
-python evyl.py run targets.txt --dry-run --language=en
+python launch.py run targets.txt --dry-run --language=en
 ```
 
 ### Traditional CLI Mode
@@ -192,10 +192,10 @@ python launch.py --interactive --language=fr
 
 ## 📋 Command Line Options (v3.1)
 
-### New Evyl-Style Commands
+### Quick Commands
 ```bash
-# Evyl run command with auto-configuration
-python evyl.py run <targets_file> [options]
+# Quick launch command with auto-configuration
+python launch.py run <targets_file> [options]
 
 Options for 'run' command:
   --language {en,fr}              UI language (English/French)
