@@ -1,0 +1,37 @@
+# Add logs and temporary files to gitignore
+*.log
+*.tmp
+/tmp/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.env
+.venv
+
+# Results and output directories
+results/
+output/
+reports/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# Test files (keep examples)
+test_targets.txt
