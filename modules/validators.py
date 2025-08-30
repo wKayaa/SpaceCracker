@@ -38,8 +38,16 @@ class SecretValidator:
         try:
             if secret_type == 'aws_access_key' and self.validation_config.get('check_aws'):
                 return await self._validate_aws_key(secret_data)
+            elif secret_type == 'aws_ses_key' and self.validation_config.get('check_aws_ses'):
+                return await self._validate_aws_ses_key(secret_data)
             elif secret_type == 'sendgrid_key' and self.validation_config.get('check_sendgrid'):
                 return await self._validate_sendgrid_key(secret_value)
+            elif secret_type == 'mailgun_key' and self.validation_config.get('check_mailgun'):
+                return await self._validate_mailgun_key(secret_data)
+            elif secret_type == 'postmark_token' and self.validation_config.get('check_postmark'):
+                return await self._validate_postmark_token(secret_value)
+            elif secret_type == 'sparkpost_key' and self.validation_config.get('check_sparkpost'):
+                return await self._validate_sparkpost_key(secret_value)
             elif secret_type == 'smtp_credentials' and self.validation_config.get('check_smtp'):
                 return await self._validate_smtp_credentials(secret_data)
             elif secret_type == 'stripe_key' and self.validation_config.get('check_stripe'):
@@ -315,3 +323,154 @@ class SecretValidator:
                 })
                 
         return validated_secrets
+
+    async def _validate_aws_ses_key(self, secret_data):
+        """Validate AWS SES credentials and get sending quota"""
+        try:
+            access_key = secret_data.get('access_key', '')
+            secret_key = secret_data.get('secret_key', '')
+            region = secret_data.get('region', 'us-east-1')
+            
+            if not access_key or not secret_key:
+                return {'valid': False, 'error': 'Missing AWS SES access key or secret key'}
+                
+            # Create boto3 session with provided credentials
+            session = boto3.Session(
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                region_name=region
+            )
+            
+            # Test with SES-specific calls
+            ses_client = session.client('ses')
+            
+            # Get sending quota
+            quota_response = ses_client.get_send_quota()
+            
+            # Get verified email addresses
+            verified_response = ses_client.list_verified_email_addresses()
+            
+            return {
+                'valid': True,
+                'service': 'AWS SES',
+                'region': region,
+                'max_24_hour_send': quota_response.get('Max24HourSend'),
+                'max_send_rate': quota_response.get('MaxSendRate'),
+                'sent_last_24_hours': quota_response.get('SentLast24Hours'),
+                'verified_emails_count': len(verified_response.get('VerifiedEmailAddresses', [])),
+                'verified_emails': verified_response.get('VerifiedEmailAddresses', [])[:5]  # Show first 5
+            }
+            
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code in ['InvalidUserID.NotFound', 'SignatureDoesNotMatch']:
+                return {'valid': False, 'error': 'Invalid AWS SES credentials'}
+            elif error_code == 'AccessDenied':
+                return {'valid': True, 'service': 'AWS SES', 'note': 'Valid credentials but SES access denied'}
+            else:
+                return {'valid': False, 'error': f'AWS SES error: {error_code}'}
+        except Exception as e:
+            return {'valid': False, 'error': str(e)}
+
+    async def _validate_mailgun_key(self, secret_data):
+        """Validate Mailgun API key"""
+        try:
+            api_key = secret_data.get('api_key', '')
+            domain = secret_data.get('domain', '')
+            
+            if not api_key:
+                return {'valid': False, 'error': 'Missing Mailgun API key'}
+                
+            async with aiohttp.ClientSession() as session:
+                auth = aiohttp.BasicAuth('api', api_key)
+                
+                # Test with domain stats endpoint
+                if domain:
+                    url = f'https://api.mailgun.net/v3/{domain}/stats/total'
+                else:
+                    url = 'https://api.mailgun.net/v3/domains'
+                    
+                async with session.get(url, auth=auth) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        result = {
+                            'valid': True,
+                            'service': 'Mailgun',
+                            'api_key_type': 'Domain' if domain else 'Account'
+                        }
+                        
+                        if domain:
+                            result['domain'] = domain
+                            result['stats'] = data.get('stats', [])[:1]  # Show recent stats
+                        else:
+                            result['domains_count'] = len(data.get('items', []))
+                            
+                        return result
+                    elif response.status == 401:
+                        return {'valid': False, 'error': 'Invalid Mailgun API key'}
+                    else:
+                        return {'valid': False, 'error': f'Mailgun API error: {response.status}'}
+                        
+        except Exception as e:
+            return {'valid': False, 'error': str(e)}
+
+    async def _validate_postmark_token(self, api_token):
+        """Validate Postmark server token"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    'X-Postmark-Server-Token': api_token,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+                
+                # Test with server info endpoint
+                async with session.get('https://api.postmarkapp.com/server', headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            'valid': True,
+                            'service': 'Postmark',
+                            'server_name': data.get('Name'),
+                            'server_id': data.get('ID'),
+                            'color': data.get('Color'),
+                            'bounce_hook_url': bool(data.get('BounceHookUrl')),
+                            'inbound_hook_url': bool(data.get('InboundHookUrl'))
+                        }
+                    elif response.status == 401:
+                        return {'valid': False, 'error': 'Invalid Postmark server token'}
+                    else:
+                        return {'valid': False, 'error': f'Postmark API error: {response.status}'}
+                        
+        except Exception as e:
+            return {'valid': False, 'error': str(e)}
+
+    async def _validate_sparkpost_key(self, api_key):
+        """Validate SparkPost API key"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    'Authorization': api_key,
+                    'Content-Type': 'application/json'
+                }
+                
+                # Test with account endpoint
+                async with session.get('https://api.sparkpost.com/api/v1/account', headers=headers) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        result = data.get('results', {})
+                        return {
+                            'valid': True,
+                            'service': 'SparkPost',
+                            'company_name': result.get('company_name'),
+                            'country_code': result.get('country_code'),
+                            'anniversary': result.get('anniversary'),
+                            'created': result.get('created')
+                        }
+                    elif response.status == 401:
+                        return {'valid': False, 'error': 'Invalid SparkPost API key'}
+                    else:
+                        return {'valid': False, 'error': f'SparkPost API error: {response.status}'}
+                        
+        except Exception as e:
+            return {'valid': False, 'error': str(e)}
