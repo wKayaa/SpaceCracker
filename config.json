@@ -1,0 +1,36 @@
+{
+  "scanner": {
+    "threads": 10,
+    "rate_limit": 2,
+    "timeout": 10,
+    "max_retries": 3,
+    "random_delay_min": 1,
+    "random_delay_max": 3,
+    "user_agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"
+  },
+  "modules": {
+    "ggb_scanner": true,
+    "js_scanner": true,
+    "git_scanner": true,
+    "cve_exploits": true,
+    "path_scanner": true
+  },
+  "telegram": {
+    "enabled": false,
+    "bot_token": "",
+    "chat_id": "",
+    "send_only_valid": true
+  },
+  "output": {
+    "json_file": "results.json",
+    "txt_file": "results.txt",
+    "verbose": true
+  },
+  "validation": {
+    "check_aws": true,
+    "check_sendgrid": true,
+    "check_smtp": true,
+    "check_stripe": true,
+    "check_github": true
+  }
+}
