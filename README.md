@@ -472,6 +472,39 @@ Severity Breakdown:
 
 ---
 
+## ⚡ Quick Reference
+
+### Most Common Commands
+```bash
+# Quick scan (recommended)
+./spacecracker_simple targets.txt
+
+# Preview scan plan
+./spacecracker_simple targets.txt --dry-run
+
+# High performance scan
+python launch.py run targets.txt --performance-mode=high
+
+# Interactive setup (beginner-friendly)
+python launch.py --interactive
+
+# List available modules
+python launch.py --list-modules
+```
+
+### Common Target Files
+```bash
+# Create your own targets file
+echo "https://your-domain.com" > my_targets.txt
+echo "https://sub.your-domain.com" >> my_targets.txt
+
+# Use provided examples
+./spacecracker_simple demo_targets.txt
+./spacecracker_simple examples/targets.txt
+```
+
+---
+
 ## 🧪 Testing
 
 ```bash
@@ -485,6 +518,37 @@ python tests/test_registry.py
 python launch.py --version
 python launch.py --list-modules
 python launch.py --targets test_target.txt --dry-run
+```
+
+---
+
+## ❓ Troubleshooting
+
+### Common Issues
+```bash
+# Permission error on launcher
+chmod +x spacecracker_simple launch.py
+
+# Missing dependencies
+pip install -r requirements.txt
+
+# Can't connect to targets
+# Check network connectivity and target availability
+
+# No findings in results
+# Normal for test targets - try with known vulnerable applications
+```
+
+### Getting Help
+```bash
+# General help
+python launch.py --help
+
+# Run command help  
+python launch.py run --help
+
+# List all available modules
+python launch.py --list-modules
 ```
 
 ---
