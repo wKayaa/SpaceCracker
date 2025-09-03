@@ -1,0 +1,75 @@
+# SpaceCracker Pro Configuration
+# Core scanning settings
+threads: 50
+
+# Rate limiting configuration
+rate_limit:
+  requests_per_second: 10
+  burst: 20
+
+# Active modules
+modules:
+  - ggb_scanner
+  - js_scanner
+  - git_scanner
+  - laravel_scanner
+  - smtp_scanner
+  - path_scanner
+  - exploit_runner
+  - credential_scraper
+
+# Secret detection patterns
+secrets:
+  patterns:
+    - name: "AWS Access Key"
+      regex: "AKIA[0-9A-Z]{16}"
+    - name: "GitHub Token"
+      regex: "ghp_[a-zA-Z0-9]{36}"
+    - name: "Stripe API Key"
+      regex: "sk_live_[0-9a-zA-Z]{24}"
+    - name: "SendGrid API Key"
+      regex: "SG\\.[a-zA-Z0-9_\\-\\.]{66}"
+    - name: "JWT Token"
+      regex: "eyJ[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*"
+    - name: "API Key Generic"
+      regex: "api[_-]?key[\"']?\\s*[:=]\\s*[\"']([\\w\\-]{20,})[\"']"
+    - name: "Database URL"
+      regex: "(mongodb|mysql|postgresql)://[^\\s\"']+"
+  entropy_min: 4.0
+
+# Telegram notifications
+telegram:
+  enabled: false
+  bot_token: "env:TELEGRAM_BOT_TOKEN"
+  chat_id: "env:TELEGRAM_CHAT_ID"
+  notify_severity_min: "High"
+
+# Operational security
+opsec:
+  random_delay_ms: [50, 250]
+  rotate_user_agents: true
+  proxy_list_file: null
+  respect_robots_txt: true
+
+# Output configuration
+outputs:
+  directory: "results"
+  formats: ["json", "txt", "csv", "html"]
+
+# Web UI Configuration
+webui:
+  enabled: false
+  host: "127.0.0.1"
+  port: 8080
+  debug: false
+  theme: "dark_pink"
+  secret_key: "env:FLASK_SECRET_KEY"
+
+# Plugin system
+plugins:
+  auto_discover: true
+  plugin_dirs:
+    - "plugins"
+    - "exploits"
+    - "wordlists"
+  enabled_plugins: []
