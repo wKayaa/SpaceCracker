@@ -1,0 +1,98 @@
+# Common web paths for SpaceCracker Pro
+# Admin and management interfaces
+/admin/
+/administrator/
+/panel/
+/dashboard/
+/wp-admin/
+/phpmyadmin/
+/cpanel/
+/webmail/
+/manager/
+/management/
+/control/
+
+# Configuration files
+/.env
+/.env.local
+/.env.production
+/.env.development
+/config.php
+/config.json
+/config.xml
+/config.yml
+/configuration.php
+/settings.php
+/app.config
+/web.config
+/.htaccess
+/.htpasswd
+
+# Backup and sensitive files
+/backup/
+/backups/
+/backup.zip
+/backup.tar.gz
+/dump.sql
+/database.sql
+/db.sql
+/mysql.sql
+/backup.sql
+
+# Development and debug
+/debug/
+/dev/
+/test/
+/staging/
+/development/
+/phpinfo.php
+/info.php
+/server-info
+/server-status
+
+# Version control
+/.git/
+/.git/config
+/.git/HEAD
+/.svn/
+/.hg/
+
+# API endpoints
+/api/
+/api/v1/
+/api/v2/
+/api/v3/
+/rest/
+/graphql/
+/swagger/
+/docs/
+/documentation/
+
+# Upload directories
+/uploads/
+/files/
+/assets/
+/static/
+/media/
+/images/
+/documents/
+
+# Log files
+/logs/
+/log/
+/access.log
+/error.log
+/debug.log
+/application.log
+
+# Database files
+/db/
+/database/
+/sql/
+/mysql/
+/data/
+
+# Temporary directories
+/tmp/
+/temp/
+/cache/

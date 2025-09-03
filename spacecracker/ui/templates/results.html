@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Results - SpaceCracker Pro{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <h1><i class="fas fa-list-alt"></i> Scan Results</h1>
+    <p>View and analyze your security findings</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Filters and Export -->
+<div class="card">
+    <div class="card-body">
+        <form method="GET" class="d-flex justify-content-between align-items-center">
+            <div class="d-flex gap-3">
+                <!-- Severity Filter -->
+                <div class="form-group mb-0">
+                    <select name="severity" class="form-control form-select">
+                        <option value="">All Severities</option>
+                        {% for severity in severities %}
+                        <option value="{{ severity }}" {% if severity == current_filters.severity %}selected{% endif %}>
+                            {{ severity }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Module Filter -->
+                <div class="form-group mb-0">
+                    <select name="module" class="form-control form-select">
+                        <option value="">All Modules</option>
+                        {% for module in modules %}
+                        <option value="{{ module }}" {% if module == current_filters.module %}selected{% endif %}>
+                            {{ module }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+
+            <!-- Export Buttons -->
+            <div class="btn-group">
+                <button type="button" class="btn btn-secondary" data-export="json">
+                    <i class="fas fa-file-code"></i> JSON
+                </button>
+                <button type="button" class="btn btn-secondary" data-export="csv">
+                    <i class="fas fa-file-csv"></i> CSV
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3 class="card-title">
+            <i class="fas fa-bug"></i> Findings 
+            <span class="badge badge-low">{{ pagination.total }}</span>
+        </h3>
+        <div class="form-group mb-0">
+            <select class="form-control form-select" onchange="window.location.href='?per_page=' + this.value">
+                <option value="25" {% if pagination.per_page == 25 %}selected{% endif %}>25 per page</option>
+                <option value="50" {% if pagination.per_page == 50 %}selected{% endif %}>50 per page</option>
+                <option value="100" {% if pagination.per_page == 100 %}selected{% endif %}>100 per page</option>
+            </select>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if results %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Severity</th>
+                        <th>Type</th>
+                        <th>Target</th>
+                        <th>Module</th>
+                        <th>Description</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for result in results %}
+                    <tr>
+                        <td>
+                            <span class="badge badge-{{ result.severity|lower }}">
+                                {{ result.severity }}
+                            </span>
+                        </td>
+                        <td>{{ result.type }}</td>
+                        <td>
+                            <a href="{{ result.target }}" target="_blank" class="text-accent">
+                                {{ result.target|truncate(40) }}
+                                <i class="fas fa-external-link-alt fa-sm"></i>
+                            </a>
+                        </td>
+                        <td><code>{{ result.module }}</code></td>
+                        <td>{{ result.description|truncate(80) }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-secondary" onclick="showDetails({{ loop.index0 }})">
+                                <i class="fas fa-info-circle"></i> Details
+                            </button>
+                            <button class="btn btn-sm btn-primary" onclick="retest('{{ result.target }}', '{{ result.module }}')">
+                                <i class="fas fa-redo"></i> Retest
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        {% if pagination.pages > 1 %}
+        <div class="card-footer">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.page - 1 }}&per_page={{ pagination.per_page }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for page in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if page == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="?page={{ page }}&per_page={{ pagination.per_page }}">
+                            {{ page }}
+                        </a>
+                    </li>
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ pagination.page + 1 }}&per_page={{ pagination.per_page }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <div class="text-center text-muted">
+                Showing {{ ((pagination.page - 1) * pagination.per_page) + 1 }} to 
+                {{ [pagination.page * pagination.per_page, pagination.total] | min }} 
+                of {{ pagination.total }} results
+            </div>
+        </div>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center text-muted p-5">
+            <i class="fas fa-search fa-3x mb-3"></i>
+            <h4>No Results Found</h4>
+            <p>No scan results match your current filters.</p>
+            <a href="{{ url_for('main.scan_page') }}" class="btn btn-primary">
+                <i class="fas fa-play"></i> Start New Scan
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Details Modal -->
+<div id="detailsModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 800px;">
+        <div class="modal-header">
+            <h4>Finding Details</h4>
+            <button class="btn-close" onclick="closeDetailsModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <div id="detailsContent">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.pagination {
+    margin-bottom: 0;
+}
+
+.page-link {
+    background: var(--secondary-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.125rem;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.page-link:hover {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.page-item.active .page-link {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0;
+    min-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.btn-close:hover {
+    background: var(--danger);
+    color: white;
+}
+
+.gap-3 > * + * {
+    margin-left: 1rem;
+}
+</style>
+
+<script>
+// Store results data for modal display
+const resultsData = {{ results | tojson | safe }};
+
+function showDetails(index) {
+    const result = resultsData[index];
+    if (!result) return;
+
+    const detailsContent = document.getElementById('detailsContent');
+    detailsContent.innerHTML = `
+        <div class="row">
+            <div class="col-md-6">
+                <h5>Basic Information</h5>
+                <table class="table table-sm">
+                    <tr><td><strong>Type:</strong></td><td>${result.type}</td></tr>
+                    <tr><td><strong>Severity:</strong></td><td><span class="badge badge-${result.severity.toLowerCase()}">${result.severity}</span></td></tr>
+                    <tr><td><strong>Module:</strong></td><td><code>${result.module}</code></td></tr>
+                    <tr><td><strong>Target:</strong></td><td><a href="${result.target}" target="_blank">${result.target}</a></td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h5>Additional Details</h5>
+                <div class="bg-dark p-3 rounded">
+                    <pre><code>${JSON.stringify(result, null, 2)}</code></pre>
+                </div>
+            </div>
+        </div>
+        <div class="mt-4">
+            <h5>Description</h5>
+            <p>${result.description}</p>
+        </div>
+    `;
+
+    document.getElementById('detailsModal').style.display = 'block';
+}
+
+function closeDetailsModal() {
+    document.getElementById('detailsModal').style.display = 'none';
+}
+
+function retest(target, module) {
+    if (confirm(`Retest ${target} with ${module} module?`)) {
+        window.spaceCrackerUI.showAlert('Retest functionality coming soon...', 'info');
+    }
+}
+
+// Close modal when clicking outside
+document.getElementById('detailsModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDetailsModal();
+    }
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDetailsModal();
+    }
+});
+</script>
+{% endblock %}
