@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Launch Scan - SpaceCracker Pro{% endblock %}
+
+{% block header %}
+<div class="page-header">
+    <h1><i class="fas fa-search"></i> Launch Scan</h1>
+    <p>Configure and launch your security assessment</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<form id="scanForm" class="fade-in">
+    <div class="row">
+        <!-- Target Configuration -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-crosshairs"></i> Target Configuration</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Manual Target Input -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-globe"></i> Target URLs/IPs
+                            <span class="text-muted">(one per line)</span>
+                        </label>
+                        <textarea id="targets" name="targets" class="form-control" rows="6" 
+                                placeholder="https://example.com&#10;192.168.1.1&#10;subdomain.example.com"></textarea>
+                    </div>
+
+                    <!-- File Upload -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-upload"></i> Upload Target List
+                        </label>
+                        <div class="file-upload">
+                            <input type="file" id="targetFile" accept=".txt,.csv">
+                            <div class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                Choose File or Drag & Drop
+                            </div>
+                        </div>
+                        <small class="text-muted">Supported formats: .txt, .csv</small>
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="targetDropZone" class="drop-zone">
+                        <i class="fas fa-cloud-upload-alt fa-2x text-accent"></i>
+                        <p>Drag and drop your target file here</p>
+                    </div>
+
+                    <!-- Target List Display -->
+                    <div id="targetList" class="target-list"></div>
+                </div>
+            </div>
+
+            <!-- Scan Options -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-sliders-h"></i> Scan Options</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Threads</label>
+                                <input type="number" class="form-control" name="threads" value="{{ config.threads }}" min="1" max="200">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Rate Limit (req/sec)</label>
+                                <input type="number" class="form-control" name="rate_limit" value="{{ config.rate_limit.requests_per_second }}" step="0.1">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">Timeout (seconds)</label>
+                                <input type="number" class="form-control" name="timeout" value="30" min="5" max="120">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" name="recursive" class="form-check-input me-2">
+                            Enable Recursive Scanning
+                        </label>
+                        <small class="text-muted d-block">Scan discovered directories recursively</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">
+                            <input type="checkbox" name="auto_exploit" class="form-check-input me-2">
+                            Automatic Exploit Execution
+                        </label>
+                        <small class="text-muted d-block">Automatically run safe exploits on discoveries</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Module Selection -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title"><i class="fas fa-puzzle-piece"></i> Modules</h3>
+                    <div class="btn-group btn-group-sm">
+                        <button type="button" id="selectAllModules" class="btn btn-secondary">All</button>
+                        <button type="button" id="selectNoneModules" class="btn btn-secondary">None</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% for module_id, module_info in available_modules.items() %}
+                    <div class="form-group">
+                        <label class="module-option">
+                            <input type="checkbox" name="modules" value="{{ module_id }}" class="form-check-input"
+                                   {% if module_id in config.modules %}checked{% endif %}>
+                            <div class="module-info">
+                                <strong>{{ module_info.name }}</strong>
+                                <small class="text-muted d-block">{{ module_info.description }}</small>
+                                {% if module_info.supports_batch %}
+                                <span class="badge badge-low">Batch Mode</span>
+                                {% endif %}
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Wordlist Upload -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-list"></i> Custom Wordlists</h3>
+                </div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label class="form-label">Upload Wordlist</label>
+                        <div class="file-upload">
+                            <input type="file" id="wordlistFile" accept=".txt">
+                            <div class="file-upload-label">
+                                <i class="fas fa-file-text"></i>
+                                Choose Wordlist
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Available Wordlists -->
+                    <div class="form-group">
+                        <label class="form-label">Available Wordlists</label>
+                        <div class="wordlist-selection">
+                            <label class="form-check">
+                                <input type="checkbox" name="wordlists" value="common_paths" checked class="form-check-input">
+                                Common Paths
+                            </label>
+                            <label class="form-check">
+                                <input type="checkbox" name="wordlists" value="admin_paths" checked class="form-check-input">
+                                Admin Panels
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <button type="button" id="startScan" class="btn btn-primary btn-lg">
+                        <i class="fas fa-play"></i> Start Scan
+                    </button>
+                    <button type="button" id="dryRunScan" class="btn btn-secondary">
+                        <i class="fas fa-eye"></i> Dry Run
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-secondary" onclick="this.form.reset()">
+                        <i class="fas fa-undo"></i> Reset
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="saveTemplate">
+                        <i class="fas fa-save"></i> Save Template
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Scan Templates Modal (for future implementation) -->
+<div id="templatesModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h4>Scan Templates</h4>
+            <button class="btn-close" onclick="document.getElementById('templatesModal').style.display='none'">×</button>
+        </div>
+        <div class="modal-body">
+            <p>Predefined scan configurations coming soon...</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.module-option {
+    display: flex;
+    align-items: flex-start;
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.module-option:hover {
+    background: rgba(195, 7, 63, 0.1);
+    border-color: var(--accent-primary);
+}
+
+.module-option input[type="checkbox"] {
+    margin-right: 0.75rem;
+    margin-top: 0.125rem;
+}
+
+.module-info {
+    flex: 1;
+}
+
+.drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    margin: 1rem 0;
+    transition: all 0.3s ease;
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+    border-color: var(--accent-primary);
+    background: rgba(195, 7, 63, 0.1);
+}
+
+.target-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    padding: 0.5rem;
+    margin-top: 1rem;
+}
+
+.target-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    margin-bottom: 0.25rem;
+    background: rgba(78, 78, 80, 0.3);
+    border-radius: 3px;
+}
+
+.wordlist-selection .form-check {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--primary-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 2rem;
+    min-width: 400px;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.btn-close {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+</style>
+
+<script>
+// Additional scan page specific functionality
+document.getElementById('targetFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        window.spaceCrackerUI.uploadTargetFile(file);
+    }
+});
+
+document.getElementById('wordlistFile').addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            const response = await fetch('/api/upload/wordlist', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (response.ok) {
+                window.spaceCrackerUI.showAlert(result.message, 'success');
+            } else {
+                window.spaceCrackerUI.showAlert(result.error || 'Upload failed', 'danger');
+            }
+        } catch (error) {
+            window.spaceCrackerUI.showAlert('Error uploading wordlist: ' + error.message, 'danger');
+        }
+    }
+});
+</script>
+{% endblock %}
