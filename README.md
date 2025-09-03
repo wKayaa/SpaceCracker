@@ -1,4 +1,4 @@
-# SpaceCracker v3.1 (Evyl-Compatible)
+# SpaceCracker v3.1
 
 ```
    _____                     _____                _             
@@ -32,12 +32,12 @@
 - **Better Error Handling**: Improved error messages and recovery
 
 🎯 **Usability Enhancements**
-- **One-Command Launch**: Simple `evyl run targets.txt` for instant scanning
+- **One-Command Launch**: Simple `python launch.py run targets.txt` for instant scanning
 - **Auto-Configuration**: Intelligent defaults based on system capabilities
 - **Progress Throttling**: Reduced CPU overhead during high-frequency scans
 - **Memory Monitoring**: Real-time memory usage tracking and optimization
 
-**Advanced Laravel & Email Security Framework (Evyl-Compatible)**
+**Advanced Laravel & Email Security Framework**
 
 [![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/wKayaa/SpaceCracker)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://python.org)
@@ -45,32 +45,52 @@
 
 > ⚠️ **FOR AUTHORIZED TESTING ONLY** - Only use on systems you own or have explicit permission to test
 
----
+## 🚀 Super Simple Usage
 
-## 🚀 Quick Start (v3.1)
-
-### One-Command Launch (New!)
 ```bash
-# Quick scan with auto-optimization
-python evyl.py run targets.txt
+# 1. Install dependencies
+pip install -r requirements.txt
 
-# High-performance scan with English UI
-python evyl.py run domains.txt --language=en --performance-mode=high
+# 2. Run a quick scan (easiest way)
+./spacecracker_simple demo_targets.txt
 
-# French interface with custom threading  
-python evyl.py run targets.txt --language=fr --threads=32
+# 3. Preview what it would do (dry run)
+./spacecracker_simple demo_targets.txt --dry-run
 
-# Advanced scan with all optimizations
-python evyl.py run targets.txt --performance-mode=high --language=en --dry-run
+# 4. Scan your own targets
+echo "https://your-target.com" > my_targets.txt
+./spacecracker_simple my_targets.txt
+
+# 5. For guided setup
+python launch.py --interactive
 ```
 
-### Interactive Mode (Classic)
+---
+
+## 🚀 Advanced Usage
+
+### Quick Commands
 ```bash
-python launch.py
+# Quick scan with auto-optimization
+python launch.py run targets.txt
+
+# High-performance scan with English UI
+python launch.py run domains.txt --language=en --performance-mode=high
+
+# French interface with custom threading  
+python launch.py run targets.txt --language=fr --threads=32
+
+# Show scan plan without executing
+python launch.py run targets.txt --dry-run
+```
+
+### Interactive Mode
+```bash
+python launch.py --interactive
 # Launches interactive wizard - perfect for first-time users
 ```
 
-### CLI Mode (Traditional)
+### Traditional CLI Mode
 ```bash
 # Target a single URL
 python launch.py --targets https://example.com --language=fr
@@ -141,19 +161,19 @@ python launch.py --targets large_targets.txt --performance-mode=high --threads=1
 
 ## 📖 Usage Examples (v3.1)
 
-### Evyl-Style Commands (New!)
+### Quick Commands
 ```bash
 # List available modules
-python evyl.py --list-modules
+python launch.py --list-modules
 
 # Quick scan with auto-configuration  
-python evyl.py run targets.txt
+python launch.py run targets.txt
 
 # High-performance French interface
-python evyl.py run targets.txt --language=fr --performance-mode=high
+python launch.py run targets.txt --language=fr --performance-mode=high
 
 # Dry run to see execution plan
-python evyl.py run targets.txt --dry-run --language=en
+python launch.py run targets.txt --dry-run --language=en
 ```
 
 ### Traditional CLI Mode
@@ -192,10 +212,10 @@ python launch.py --interactive --language=fr
 
 ## 📋 Command Line Options (v3.1)
 
-### New Evyl-Style Commands
+### Quick Commands
 ```bash
-# Evyl run command with auto-configuration
-python evyl.py run <targets_file> [options]
+# Quick launch command with auto-configuration
+python launch.py run <targets_file> [options]
 
 Options for 'run' command:
   --language {en,fr}              UI language (English/French)
@@ -239,8 +259,10 @@ Integration:
 ```
 spacecracker/
 ├── launch.py                 # Universal entrypoint
+├── spacecracker_simple       # Simple launcher (easiest)
 ├── spacecracker/
 │   ├── __init__.py
+│   ├── __main__.py          # Module entry point
 │   ├── version.py           
 │   ├── cli.py               # CLI interface & wizard
 │   ├── core/
@@ -274,7 +296,25 @@ spacecracker/
 git clone https://github.com/wKayaa/SpaceCracker.git
 cd SpaceCracker
 pip install -r requirements.txt
-chmod +x launch.py
+chmod +x launch.py spacecracker_simple
+```
+
+### Three Ways to Launch
+```bash
+# 1. Simplest way (recommended for quick scans)
+./spacecracker_simple targets.txt
+
+# 2. Full CLI interface
+python launch.py run targets.txt
+
+# 3. As Python module  
+python -m spacecracker run targets.txt
+```
+
+### Quick Test
+```bash
+# Test with demo target
+./spacecracker_simple demo_targets.txt --dry-run
 ```
 
 ### Generate Sample Targets
@@ -432,6 +472,39 @@ Severity Breakdown:
 
 ---
 
+## ⚡ Quick Reference
+
+### Most Common Commands
+```bash
+# Quick scan (recommended)
+./spacecracker_simple targets.txt
+
+# Preview scan plan
+./spacecracker_simple targets.txt --dry-run
+
+# High performance scan
+python launch.py run targets.txt --performance-mode=high
+
+# Interactive setup (beginner-friendly)
+python launch.py --interactive
+
+# List available modules
+python launch.py --list-modules
+```
+
+### Common Target Files
+```bash
+# Create your own targets file
+echo "https://your-domain.com" > my_targets.txt
+echo "https://sub.your-domain.com" >> my_targets.txt
+
+# Use provided examples
+./spacecracker_simple demo_targets.txt
+./spacecracker_simple examples/targets.txt
+```
+
+---
+
 ## 🧪 Testing
 
 ```bash
@@ -445,6 +518,37 @@ python tests/test_registry.py
 python launch.py --version
 python launch.py --list-modules
 python launch.py --targets test_target.txt --dry-run
+```
+
+---
+
+## ❓ Troubleshooting
+
+### Common Issues
+```bash
+# Permission error on launcher
+chmod +x spacecracker_simple launch.py
+
+# Missing dependencies
+pip install -r requirements.txt
+
+# Can't connect to targets
+# Check network connectivity and target availability
+
+# No findings in results
+# Normal for test targets - try with known vulnerable applications
+```
+
+### Getting Help
+```bash
+# General help
+python launch.py --help
+
+# Run command help  
+python launch.py run --help
+
+# List all available modules
+python launch.py --list-modules
 ```
 
 ---

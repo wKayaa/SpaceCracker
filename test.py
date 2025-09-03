@@ -170,14 +170,13 @@ def test_files_structure():
     print("\n📁 Testing file structure...")
     
     required_files = [
-        "scanner.py",
+        "launch.py",
         "config.json",
         "requirements.txt",
         "README.md",
-        "modules/scanner_base.py",
-        "utils/regex_patterns.py",
+        "spacecracker/cli.py",
         "data/paths.txt",
-        "examples/targets.txt"
+        "demo_targets.txt"
     ]
     
     missing_files = []

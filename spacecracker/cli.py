@@ -113,10 +113,10 @@ def load_targets_from_file(filename: str) -> List[str]:
     
     return targets
 
-def evyl_run_command(args):
-    """Handle 'evyl run' style command for quick launching"""
+def run_command(args):
+    """Handle 'run' command for quick launching"""
     if len(args) < 1:
-        print("Usage: evyl run <targets_file> [--options]")
+        print("Usage: spacecracker run <targets_file> [--options]")
         return 1
     
     targets_file = args[0]
@@ -128,7 +128,7 @@ def evyl_run_command(args):
     telegram = False
     dry_run = False
     
-    # Parse arguments manually for evyl run command
+    # Parse arguments manually for run command
     i = 1
     while i < len(args):
         arg = args[i]
@@ -188,7 +188,7 @@ def evyl_run_command(args):
     
     # Handle dry run
     if dry_run:
-        print(f"\n📋 {_('scan_plan_summary')} (EVYL DRY RUN)")
+        print(f"\n📋 {_('scan_plan_summary')} (DRY RUN)")
         print("-" * 40)
         print(f"{_('plan_targets')} ({len(targets)}):")
         for target in targets[:5]:  # Show first 5
@@ -200,7 +200,7 @@ def evyl_run_command(args):
         print(f"{_('plan_threads')}: {config.threads}")
         print(f"{_('plan_rate_limit')}: {profile.rate_limit} req/s")
         print(f"Language: {language.upper()}")
-        print(f"Command: evyl run {targets_file}")
+        print(f"Command: spacecracker run {targets_file}")
         return 0
     
     print(f"\n{_('scan_starting')}")
@@ -243,12 +243,12 @@ def evyl_run_command(args):
 
 def main():
     """Main CLI entry point"""
-    # Check for 'evyl run' style command
+    # Check for 'run' style command
     if len(sys.argv) >= 3 and sys.argv[1] == 'run':
-        return evyl_run_command(sys.argv[2:])
+        return run_command(sys.argv[2:])
     
     parser = argparse.ArgumentParser(
-        description='SpaceCracker v3.1 - Advanced Laravel & Email Security Framework (Evyl-Compatible)'
+        description='SpaceCracker v3.1 - Advanced Laravel & Email Security Framework'
     )
     
     # Add subcommand for 'run' to support both styles
@@ -280,7 +280,7 @@ def main():
     parser.add_argument('--list-modules', action='store_true', help='List available modules')
     parser.add_argument('--dry-run', action='store_true', help='Show scan plan without executing')
     parser.add_argument('--interactive', action='store_true', help='Force interactive wizard')
-    parser.add_argument('--version', action='version', version=f'SpaceCracker v{__version__} (Evyl-Compatible)')
+    parser.add_argument('--version', action='version', version=f'SpaceCracker v{__version__}')
     
     args = parser.parse_args()
     
@@ -292,7 +292,7 @@ def main():
     
     # Handle 'run' subcommand
     if args.command == 'run':
-        return evyl_run_command([args.targets] + [f'--{k.replace("_", "-")}' if v is True else f'--{k.replace("_", "-")}={v}' for k, v in vars(args).items() if k not in ['command', 'targets'] and v not in [None, False]])
+        return run_command([args.targets] + [f'--{k.replace("_", "-")}' if v is True else f'--{k.replace("_", "-")}={v}' for k, v in vars(args).items() if k not in ['command', 'targets'] and v not in [None, False]])
     
     # List modules and exit
     if args.list_modules:

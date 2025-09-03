@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+"""
+SpaceCracker - Simple Launcher
+Quick and easy way to start SpaceCracker scans
+"""
+import sys
+import os
+
+# Add current directory to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from spacecracker.cli import run_command
+
+def main():
+    """Simple launcher - automatically uses run command"""
+    if len(sys.argv) < 2:
+        print("SpaceCracker - Simple Usage:")
+        print("  spacecracker <targets_file>              # Quick scan")
+        print("  spacecracker <targets_file> --dry-run    # Preview scan")
+        print("  spacecracker <targets_file> --language=fr # French UI")
+        print("")
+        print("For advanced options, use: python launch.py --help")
+        return 1
+    
+    # Pass all arguments to run_command
+    return run_command(sys.argv[1:])
+
+if __name__ == "__main__":
+    sys.exit(main())

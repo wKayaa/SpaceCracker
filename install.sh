@@ -13,9 +13,9 @@ python3 --version
 echo "📦 Installing dependencies..."
 pip3 install -r requirements.txt
 
-# Make scanner executable
-echo "🔧 Making scanner executable..."
-chmod +x scanner.py
+# Make launcher executable
+echo "🔧 Making launcher executable..."
+chmod +x launch.py
 
 # Create results directory
 echo "📁 Creating results directory..."
@@ -25,9 +25,10 @@ echo
 echo "✅ SpaceCracker is ready to use!"
 echo
 echo "Quick start examples:"
-echo "  Basic scan: python3 scanner.py -t examples/targets.txt"
-echo "  Specific modules: python3 scanner.py -t examples/targets.txt --modules ggb js git"
-echo "  High performance: python3 scanner.py -t targets.txt --threads 50 --rate-limit 10"
+echo "  Basic scan: python3 launch.py run demo_targets.txt"
+echo "  Interactive mode: python3 launch.py --interactive"
+echo "  List modules: python3 launch.py --list-modules"
+echo "  High performance: python3 launch.py run targets.txt --threads 50"
 echo
-echo "For help: python3 scanner.py --help"
+echo "For help: python3 launch.py --help"
 echo "For documentation: see README.md"
