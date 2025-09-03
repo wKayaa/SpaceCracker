@@ -6,6 +6,7 @@ High-performance real-time UI with statistics for SpaceCracker v3.1
 
 import time
 import threading
+import os
 from typing import Dict, Any, List
 from .performance import get_performance_manager
 from .language import _
@@ -13,9 +14,10 @@ from .language import _
 class ProgressDisplay:
     """Enhanced progress display with real-time statistics"""
     
-    def __init__(self, total_targets: int = 0, language: str = 'en'):
+    def __init__(self, total_targets: int = 0, language: str = 'en', telegram_bot=None):
         self.total_targets = total_targets
         self.language = language
+        self.telegram_bot = telegram_bot
         self.stats = {
             'urls_processed': 0,
             'unique_urls': 0,
@@ -30,6 +32,8 @@ class ProgressDisplay:
         self.display_thread = None
         self.display_active = False
         self.stats_lock = threading.Lock()
+        self.last_telegram_update = 0
+        self.telegram_update_interval = 30  # Send Telegram updates every 30 seconds
         
     def start_display(self):
         """Start the enhanced progress display"""
@@ -46,6 +50,34 @@ class ProgressDisplay:
         self.display_active = False
         if self.display_thread:
             self.display_thread.join(timeout=3)
+        
+        # Send final Telegram notification if enabled
+        if self.telegram_bot:
+            try:
+                import asyncio
+                import threading
+                
+                def final_telegram_update():
+                    try:
+                        with self.stats_lock:
+                            stats = self.stats.copy()
+                        
+                        elapsed = time.time() - stats['start_time']
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(
+                            self.telegram_bot.send_scan_completion(stats, elapsed)
+                        )
+                        loop.close()
+                    except Exception:
+                        pass
+                
+                telegram_thread = threading.Thread(target=final_telegram_update, daemon=True)
+                telegram_thread.start()
+                telegram_thread.join(timeout=3)
+                
+            except Exception:
+                pass
             
     def update_stats(self, **kwargs):
         """Update progress statistics"""
@@ -65,88 +97,142 @@ class ProgressDisplay:
                         self.stats[key] = value
                         
     def _display_loop(self):
-        """Main display loop"""
+        """Main display loop with Telegram integration"""
         while self.display_active:
             try:
                 self._render_display()
+                
+                # Send Telegram updates if configured
+                if self.telegram_bot and self._should_send_telegram_update():
+                    self._send_telegram_progress_update()
+                    
                 time.sleep(self.refresh_rate)
             except Exception:
                 pass  # Continue displaying even if there are errors
                 
+    def _should_send_telegram_update(self) -> bool:
+        """Check if it's time to send a Telegram update"""
+        current_time = time.time()
+        return (current_time - self.last_telegram_update) >= self.telegram_update_interval
+    
+    def _send_telegram_progress_update(self):
+        """Send progress update to Telegram (non-blocking)"""
+        try:
+            current_time = time.time()
+            with self.stats_lock:
+                stats = self.stats.copy()
+            
+            elapsed_time = current_time - stats['start_time']
+            
+            # Create asyncio task for non-blocking Telegram update
+            import asyncio
+            import threading
+            
+            def telegram_update():
+                try:
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(
+                        self.telegram_bot.send_progress_update(stats, elapsed_time)
+                    )
+                    loop.close()
+                except Exception:
+                    pass  # Silently fail to avoid disrupting main process
+            
+            # Run Telegram update in background thread
+            telegram_thread = threading.Thread(target=telegram_update, daemon=True)
+            telegram_thread.start()
+            
+            self.last_telegram_update = current_time
+            
+        except Exception:
+            pass  # Silently fail to avoid disrupting main process
+                
     def _render_display(self):
         """Render the enhanced progress display"""
-        with self.stats_lock:
-            current_stats = self.stats.copy()
-        
-        # Get performance stats
-        perf_manager = get_performance_manager()
-        perf_stats = perf_manager.get_stats()
-        
-        # Calculate progress
-        progress_pct = 0.0
-        if self.total_targets > 0:
-            progress_pct = (current_stats['urls_processed'] / self.total_targets) * 100
-            progress_pct = min(100.0, progress_pct)
-        
-        # Calculate elapsed time
-        elapsed = time.time() - current_stats['start_time']
-        elapsed_str = self._format_time(elapsed)
-        
-        # Calculate success rate
-        success_rate = 0.0
-        if current_stats['urls_processed'] > 0:
-            success_rate = (current_stats['urls_validated'] / current_stats['urls_processed']) * 100
-        
-        # Clear screen and render display
-        print("\033[2J\033[H", end="")  # Clear screen and move cursor to top
-        
-        # Header
-        print("🔍 EVYL SCANNER V3.1 - " + _('scan_progress').upper() + " 🔍")
-        print()
-        
-        # Current file info
-        if current_stats.get('current_file'):
-            print(f"📁 File: {current_stats['current_file']}")
-        
-        # Progress info
-        print(f"⏱️ " + _('elapsed_time') + f": {elapsed_str}")
-        print(f"📊 " + _('progress') + f": {self._render_progress_bar(progress_pct)} {progress_pct:.1f}%")
-        print()
-        
-        # Statistics
-        print("📈 " + _('total_stats') + ":")
-        print(f"🌐 " + _('urls_processed') + f": {current_stats['urls_processed']:,}")
-        print(f"🎯 " + _('unique_urls') + f": {current_stats['unique_urls']:,}")
-        print(f"✅ " + _('urls_validated') + f": {current_stats['urls_validated']:,}")
-        print(f"📉 " + _('success_rate') + f": {success_rate:.1f}%")
-        print()
-        
-        # Findings by service
-        total_findings = sum(current_stats['findings_by_service'].values())
-        if total_findings > 0:
-            print("🏆 " + _('hits_found').format(total_findings) + ":")
-            findings_display = []
-            for service, count in sorted(current_stats['findings_by_service'].items(), key=lambda x: x[1], reverse=True):
-                if count > 0:
-                    findings_display.append(f"✅ {service.title()}: {count}")
+        try:
+            with self.stats_lock:
+                current_stats = self.stats.copy()
             
-            # Display findings in rows of 4
-            for i in range(0, len(findings_display), 4):
-                row = findings_display[i:i+4]
-                print("  " + "  ".join(row))
+            # Get performance stats
+            perf_manager = get_performance_manager()
+            perf_stats = perf_manager.get_stats()
+            
+            # Calculate progress
+            progress_pct = 0.0
+            if self.total_targets > 0:
+                progress_pct = (current_stats['urls_processed'] / self.total_targets) * 100
+                progress_pct = min(100.0, progress_pct)
+            
+            # Calculate elapsed time
+            elapsed = time.time() - current_stats['start_time']
+            elapsed_str = self._format_time(elapsed)
+            
+            # Calculate success rate
+            success_rate = 0.0
+            if current_stats['urls_processed'] > 0:
+                success_rate = (current_stats['urls_validated'] / current_stats['urls_processed']) * 100
+            
+            # Clear screen and render display with better terminal handling
+            try:
+                # Use ANSI escape codes for better compatibility
+                print("\033[H\033[2J", end="", flush=True)  # Move to top, then clear
+            except:
+                # Fallback for terminals that don't support ANSI
+                os.system('cls' if os.name == 'nt' else 'clear')
+            
+            # Header
+            print("🔍 EVYL SCANNER V3.1 - " + _('scan_progress').upper() + " 🔍")
+            print("=" * 60)
+            
+            # Current file info
+            if current_stats.get('current_file'):
+                print(f"📁 File: {current_stats['current_file']}")
+            
+            # Progress info
+            print(f"⏱️ " + _('elapsed_time') + f": {elapsed_str}")
+            print(f"📊 " + _('progress') + f": {self._render_progress_bar(progress_pct)} {progress_pct:.1f}%")
             print()
-        
-        # System performance
-        cpu_usage = perf_stats.get('cpu_usage', 0)
-        memory_usage = perf_stats.get('memory_usage', 0)
-        http_rate = self._calculate_http_rate(current_stats, elapsed)
-        current_time = time.strftime("%H:%M:%S")
-        
-        print(f"💻 " + _('cpu_usage') + f": {cpu_usage:.1f}% | " + 
-              f"🧠 " + _('ram_usage') + f": {memory_usage:.1f} MB | " + 
-              f"📡 " + _('http_rate') + f": {http_rate}/s | " + 
-              f"⏰ {current_time}")
-        print()
+            
+            # Statistics
+            print("📈 " + _('total_stats') + ":")
+            print(f"🌐 " + _('urls_processed') + f": {current_stats['urls_processed']:,}")
+            print(f"🎯 " + _('unique_urls') + f": {current_stats['unique_urls']:,}")
+            print(f"✅ " + _('urls_validated') + f": {current_stats['urls_validated']:,}")
+            print(f"📉 " + _('success_rate') + f": {success_rate:.1f}%")
+            print()
+            
+            # Findings by service
+            total_findings = sum(current_stats['findings_by_service'].values())
+            if total_findings > 0:
+                print(f"🏆 " + _('hits_found') + f" (TOTAL: {total_findings}):")
+                findings_display = []
+                for service, count in sorted(current_stats['findings_by_service'].items(), key=lambda x: x[1], reverse=True):
+                    if count > 0:
+                        findings_display.append(f"✅ {service.title()}: {count}")
+                
+                # Display findings in rows of 4 for better visibility
+                for i in range(0, len(findings_display), 4):
+                    row = findings_display[i:i+4]
+                    print("  " + "  ".join(row))
+                print()
+            
+            # System performance with better formatting
+            cpu_usage = perf_stats.get('cpu_usage', 0)
+            memory_usage = perf_stats.get('memory_usage', 0)
+            http_rate = self._calculate_http_rate(current_stats, elapsed)
+            current_time = time.strftime("%H:%M:%S")
+            
+            print(f"💻 CPU: {cpu_usage:.1f}% | " + 
+                  f"🧠 RAM: {memory_usage:.1f} MB | " + 
+                  f"📡 HTTP: {http_rate}/s | " + 
+                  f"⏰ {current_time}")
+            print("=" * 60)
+            
+        except Exception as e:
+            # Fallback display if rendering fails
+            print(f"\r🔍 Scanning... {current_stats.get('urls_processed', 0):,} processed | " + 
+                  f"{sum(current_stats.get('findings_by_service', {}).values())} hits", end="", flush=True)
         
     def _render_progress_bar(self, percentage: float, width: int = 40) -> str:
         """Render a progress bar"""
@@ -174,7 +260,7 @@ class ProgressDisplay:
         return 0
         
     def show_final_summary(self):
-        """Show final scan summary"""
+        """Show final scan summary with Telegram completion notification"""
         with self.stats_lock:
             current_stats = self.stats.copy()
         
@@ -200,6 +286,31 @@ class ProgressDisplay:
         print(f"  📡 Average rate: {avg_rate} URLs/second")
         print(f"  🧠 Peak memory: {get_performance_manager().get_memory_usage_mb():.1f} MB")
         print("="*60)
+        
+        # Send Telegram completion notification
+        if self.telegram_bot:
+            try:
+                import asyncio
+                import threading
+                
+                def telegram_completion():
+                    try:
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(
+                            self.telegram_bot.send_scan_completion(current_stats, elapsed)
+                        )
+                        loop.close()
+                    except Exception:
+                        pass
+                
+                # Send completion message in background
+                telegram_thread = threading.Thread(target=telegram_completion, daemon=True)
+                telegram_thread.start()
+                telegram_thread.join(timeout=5)  # Wait up to 5 seconds
+                
+            except Exception:
+                pass  # Silently fail
 
 class CompactProgressDisplay:
     """Compact progress display for streamlined hits visibility"""

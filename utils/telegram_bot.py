@@ -8,6 +8,7 @@ import asyncio
 import aiohttp
 import logging
 import json
+import time
 from datetime import datetime
 
 class TelegramBot:
@@ -18,6 +19,9 @@ class TelegramBot:
         self.chat_id = chat_id
         self.base_url = f"https://api.telegram.org/bot{token}"
         self.logger = logging.getLogger(__name__)
+        self.last_progress_update = 0
+        self.progress_message_id = None
+        self.progress_update_interval = 30  # Send progress updates every 30 seconds
         
     async def send_message(self, text, parse_mode='HTML'):
         """Send a message to Telegram"""
@@ -216,7 +220,156 @@ class TelegramBot:
             self.logger.error(f"Error testing Telegram connection: {e}")
             return False
             
+    async def send_progress_update(self, stats, elapsed_time):
+        """Send or update progress message"""
+        try:
+            current_time = time.time()
+            
+            # Rate limit progress updates
+            if current_time - self.last_progress_update < self.progress_update_interval:
+                return
+                
+            self.last_progress_update = current_time
+            
+            # Format progress message
+            elapsed_str = self._format_elapsed_time(elapsed_time)
+            urls_processed = stats.get('urls_processed', 0)
+            total_findings = stats.get('total_findings', 0)
+            findings_by_service = stats.get('findings_by_service', {})
+            
+            # Calculate rate
+            rate = int(urls_processed / elapsed_time) if elapsed_time > 0 else 0
+            
+            message = f"""⚡ <b>SpaceCracker Progress Update</b> ⚡
+
+⏱️ <b>Elapsed:</b> {elapsed_str}
+🌐 <b>URLs Processed:</b> {urls_processed:,}
+📡 <b>Rate:</b> {rate}/second
+🏆 <b>Total Findings:</b> {total_findings}
+
+📊 <b>Findings by Service:</b>"""
+            
+            if findings_by_service:
+                for service, count in sorted(findings_by_service.items(), key=lambda x: x[1], reverse=True):
+                    if count > 0:
+                        message += f"\n• {service.title()}: {count}"
+            else:
+                message += "\n• No findings yet..."
+                
+            message += f"\n\n🔍 <i>Scan in progress... Next update in {self.progress_update_interval}s</i>"
+            
+            # Send or edit progress message
+            if self.progress_message_id:
+                await self._edit_message(message, self.progress_message_id)
+            else:
+                response_data = await self._send_single_message_with_response(message)
+                if response_data and 'result' in response_data:
+                    self.progress_message_id = response_data['result']['message_id']
+                    
+        except Exception as e:
+            self.logger.error(f"Error sending progress update: {e}")
+    
+    async def send_scan_completion(self, stats, elapsed_time):
+        """Send scan completion notification"""
+        try:
+            elapsed_str = self._format_elapsed_time(elapsed_time)
+            urls_processed = stats.get('urls_processed', 0)
+            total_findings = stats.get('total_findings', 0)
+            findings_by_service = stats.get('findings_by_service', {})
+            
+            avg_rate = int(urls_processed / elapsed_time) if elapsed_time > 0 else 0
+            
+            message = f"""✅ <b>SpaceCracker Scan Completed</b> ✅
+
+⏱️ <b>Total Time:</b> {elapsed_str}
+🌐 <b>URLs Processed:</b> {urls_processed:,}
+📡 <b>Average Rate:</b> {avg_rate}/second
+🏆 <b>Total Findings:</b> {total_findings}
+
+📈 <b>Final Results by Service:</b>"""
+            
+            if findings_by_service:
+                for service, count in sorted(findings_by_service.items(), key=lambda x: x[1], reverse=True):
+                    if count > 0:
+                        message += f"\n• ✅ {service.title()}: {count}"
+            else:
+                message += "\n• No findings detected"
+                
+            message += f"\n\n🎯 <i>Detailed results will be sent for validated findings only.</i>"
+            
+            await self.send_message(message)
+            
+        except Exception as e:
+            self.logger.error(f"Error sending completion message: {e}")
+    
+    async def _edit_message(self, text, message_id, parse_mode='HTML'):
+        """Edit an existing message"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = {
+                    'chat_id': self.chat_id,
+                    'message_id': message_id,
+                    'text': text,
+                    'parse_mode': parse_mode,
+                    'disable_web_page_preview': True
+                }
+                
+                async with session.post(f"{self.base_url}/editMessageText", json=data) as response:
+                    if response.status != 200:
+                        # If edit fails, send new message
+                        await self.send_message(text, parse_mode)
+                        
+        except Exception as e:
+            self.logger.error(f"Error editing message: {e}")
+            # Fallback: send new message
+            await self.send_message(text, parse_mode)
+    
+    async def _send_single_message_with_response(self, text, parse_mode='HTML'):
+        """Send a single message and return response data"""
+        try:
+            async with aiohttp.ClientSession() as session:
+                data = {
+                    'chat_id': self.chat_id,
+                    'text': text,
+                    'parse_mode': parse_mode,
+                    'disable_web_page_preview': True
+                }
+                
+                async with session.post(f"{self.base_url}/sendMessage", json=data) as response:
+                    if response.status == 200:
+                        return await response.json()
+                    else:
+                        self.logger.error(f"Telegram API error: {response.status}")
+                        return None
+                        
+        except Exception as e:
+            self.logger.error(f"Error sending message with response: {e}")
+            return None
+    
+    def _format_elapsed_time(self, seconds):
+        """Format elapsed time as human readable string"""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        seconds = int(seconds % 60)
+        
+        if hours > 0:
+            return f"{hours}h {minutes}m {seconds}s"
+        elif minutes > 0:
+            return f"{minutes}m {seconds}s"
+        else:
+            return f"{seconds}s"
+    
     async def send_startup_message(self):
+        """Send a message when the scanner starts"""
+        message = f"""🚀 <b>SpaceCracker Started</b>
+        
+Scanner has been initialized and is ready to begin scanning.
+        
+⏰ <b>Started at:</b> <code>{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</code>
+        
+You will receive periodic progress updates and notifications for validated findings only."""
+        
+        await self.send_message(message)
         """Send a message when the scanner starts"""
         message = f"""🚀 <b>SpaceCracker Started</b>
         

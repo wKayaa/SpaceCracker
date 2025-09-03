@@ -59,11 +59,27 @@ class PerformanceManager:
             ),
             'high': PerformanceProfile(
                 threads=50,
-                rate_limit=10,
-                burst=20,
+                rate_limit=15,
+                burst=30,
                 memory_limit_mb=1024,
                 cpu_threshold=80.0,
                 name='High Performance'
+            ),
+            'vps': PerformanceProfile(
+                threads=100,
+                rate_limit=50,
+                burst=100,
+                memory_limit_mb=2048,
+                cpu_threshold=85.0,
+                name='VPS High-Bandwidth'
+            ),
+            'ultra': PerformanceProfile(
+                threads=200,
+                rate_limit=100,
+                burst=200,
+                memory_limit_mb=4096,
+                cpu_threshold=90.0,
+                name='Ultra Performance'
             ),
             'auto': None  # Will be determined automatically
         }
@@ -77,15 +93,25 @@ class PerformanceManager:
             memory_gb = memory.total / (1024**3)
             
             # Determine profile based on resources
-            if cpu_count >= 8 and memory_gb >= 8:
-                # High-end system
+            if cpu_count >= 16 and memory_gb >= 16:
+                # Very high-end system (VPS/Dedicated)
+                return PerformanceProfile(
+                    threads=min(200, cpu_count * 16),
+                    rate_limit=100,
+                    burst=200,
+                    memory_limit_mb=min(4096, int(memory_gb * 1024 * 0.4)),
+                    cpu_threshold=85.0,
+                    name='Auto-Detected Ultra Performance'
+                )
+            elif cpu_count >= 8 and memory_gb >= 8:
+                # High-end system (Good VPS)
                 return PerformanceProfile(
                     threads=min(100, cpu_count * 12),
-                    rate_limit=20,
-                    burst=40,
-                    memory_limit_mb=min(2048, int(memory_gb * 1024 * 0.3)),
-                    cpu_threshold=75.0,
-                    name='Auto-Detected High Performance'
+                    rate_limit=50,
+                    burst=100,
+                    memory_limit_mb=min(2048, int(memory_gb * 1024 * 0.35)),
+                    cpu_threshold=80.0,
+                    name='Auto-Detected VPS Performance'
                 )
             elif cpu_count >= 4 and memory_gb >= 4:
                 # Mid-range system

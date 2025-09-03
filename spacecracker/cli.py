@@ -7,6 +7,7 @@ from .core import config as cfg
 from .core.registry import ModuleRegistry
 from .core.runner import ScanRunner
 from .core.reporting import ReportWriter
+from .core.utils import validate_target_list
 from .utils.language import init_language, _
 from .utils.performance import get_performance_manager
 
@@ -96,20 +97,26 @@ def interactive_wizard() -> tuple:
     
     return targets, selected_modules, threads, rate_limit, telegram_enabled
 
-def load_targets_from_file(filename: str) -> List[str]:
-    """Load targets from file"""
-    targets = []
+def load_targets_from_file(filename: str, force_http: bool = True) -> List[str]:
+    """Load targets from file with validation and normalization"""
+    raw_targets = []
     try:
         with open(filename, 'r') as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    if not line.startswith(('http://', 'https://')):
-                        line = f'http://{line}'
-                    targets.append(line)
+                    raw_targets.append(line)
     except Exception as e:
         print(_('error_loading_targets', filename, e))
         sys.exit(1)
+    
+    # Validate and normalize all targets
+    print(f"📋 Validating {len(raw_targets)} targets from {filename}...")
+    targets = validate_target_list(raw_targets, force_http=force_http)
+    print(f"✅ {len(targets)} valid targets loaded")
+    
+    if len(targets) != len(raw_targets):
+        print(f"⚠️  {len(raw_targets) - len(targets)} invalid targets were skipped")
     
     return targets
 
@@ -168,9 +175,16 @@ def run_command(args):
     
     # Load targets
     if os.path.isfile(targets_file):
-        targets = load_targets_from_file(targets_file)
+        targets = load_targets_from_file(targets_file, force_http=True)  # Force HTTP for VPS safety
     else:
-        targets = [targets_file]
+        from .core.utils import normalize_url
+        try:
+            normalized_target = normalize_url(targets_file, force_http=True)
+            targets = [normalized_target]
+            print(f"📋 Single target validated: {normalized_target}")
+        except ValueError as e:
+            print(f"❌ Invalid target: {e}")
+            return 1
     
     # Optimize for target count
     perf_manager.optimize_for_target_count(len(targets))
@@ -258,7 +272,7 @@ def main():
     run_parser = subparsers.add_parser('run', help='Quick launch scan with auto-configuration')
     run_parser.add_argument('targets', help='Target file or single target URL')
     run_parser.add_argument('--language', choices=['en', 'fr'], default='en', help='UI language')
-    run_parser.add_argument('--performance-mode', choices=['low', 'normal', 'high', 'auto'], default='auto', help='Performance profile')
+    run_parser.add_argument('--performance-mode', choices=['low', 'normal', 'high', 'vps', 'ultra', 'auto'], default='auto', help='Performance profile')
     run_parser.add_argument('--threads', type=int, help='Override thread count')
     run_parser.add_argument('--telegram', action='store_true', help='Enable Telegram notifications')
     run_parser.add_argument('--dry-run', action='store_true', help='Show scan plan without executing')
@@ -275,7 +289,7 @@ def main():
     parser.add_argument('-g', '--telegram', action='store_true', help='Enable Telegram notifications')
     parser.add_argument('-s', '--severity-filter', help='Minimum severity to report')
     parser.add_argument('--language', choices=['en', 'fr'], default='en', help='UI language (English/French)')
-    parser.add_argument('--performance-mode', choices=['low', 'normal', 'high', 'auto'], default='auto', help='Performance profile')
+    parser.add_argument('--performance-mode', choices=['low', 'normal', 'high', 'vps', 'ultra', 'auto'], default='auto', help='Performance profile')
     parser.add_argument('--no-color', action='store_true', help='Disable colored output')
     parser.add_argument('--list-modules', action='store_true', help='List available modules')
     parser.add_argument('--dry-run', action='store_true', help='Show scan plan without executing')
@@ -319,9 +333,16 @@ def main():
             
         # Load targets
         if os.path.isfile(args.targets):
-            targets = load_targets_from_file(args.targets)
+            targets = load_targets_from_file(args.targets, force_http=True)
         else:
-            targets = [args.targets]
+            from .core.utils import normalize_url
+            try:
+                normalized_target = normalize_url(args.targets, force_http=True)
+                targets = [normalized_target]
+                print(f"📋 Single target validated: {normalized_target}")
+            except ValueError as e:
+                print(f"❌ Invalid target: {e}")
+                return 1
         
         # Parse modules - include new Laravel and SMTP scanners by default
         if args.modules == 'all':
