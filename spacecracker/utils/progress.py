@@ -50,6 +50,34 @@ class ProgressDisplay:
         self.display_active = False
         if self.display_thread:
             self.display_thread.join(timeout=3)
+        
+        # Send final Telegram notification if enabled
+        if self.telegram_bot:
+            try:
+                import asyncio
+                import threading
+                
+                def final_telegram_update():
+                    try:
+                        with self.stats_lock:
+                            stats = self.stats.copy()
+                        
+                        elapsed = time.time() - stats['start_time']
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(
+                            self.telegram_bot.send_scan_completion(stats, elapsed)
+                        )
+                        loop.close()
+                    except Exception:
+                        pass
+                
+                telegram_thread = threading.Thread(target=final_telegram_update, daemon=True)
+                telegram_thread.start()
+                telegram_thread.join(timeout=3)
+                
+            except Exception:
+                pass
             
     def update_stats(self, **kwargs):
         """Update progress statistics"""
