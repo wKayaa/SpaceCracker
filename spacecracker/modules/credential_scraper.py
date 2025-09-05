@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-SpaceCracker Pro - Credential Scraper Module
-Advanced credential and secret extraction with regex patterns and parsers
+SpaceCracker V2 - Enhanced Credential Scraper Module
+Advanced credential and secret extraction with regex patterns, parsers, and validation
 """
 
 import asyncio
@@ -12,11 +12,14 @@ import xml.etree.ElementTree as ET
 import base64
 import logging
 import math
+import time
 from typing import Dict, Any, List, Optional, Set
 from urllib.parse import urljoin, urlparse
 from bs4 import BeautifulSoup
 from ..utils.http import create_session
 from .base import BaseModule
+from ..validators.sendgrid_validator import SendGridValidator
+from ..validators.aws_ses_validator import SESValidator
 
 class CredentialScraper(BaseModule):
     """Advanced credential and secret extraction module"""
@@ -33,6 +36,11 @@ class CredentialScraper(BaseModule):
         self.parsers = self._init_parsers()
         self.min_entropy = getattr(config, 'min_entropy', 4.0) if config else 4.0
         self.max_content_size = getattr(config, 'max_content_size', 5 * 1024 * 1024) if config else 5 * 1024 * 1024  # 5MB
+        
+        # Initialize validators
+        self.sendgrid_validator = SendGridValidator(config)
+        self.aws_ses_validator = SESValidator(config)
+        self.validation_enabled = getattr(config, 'validate_secrets', True) if config else True
     
     def _init_secret_patterns(self) -> Dict[str, Dict[str, Any]]:
         """Initialize comprehensive secret detection patterns"""
@@ -80,7 +88,7 @@ class CredentialScraper(BaseModule):
                 'description': 'Stripe Publishable Key'
             },
             'sendgrid_api_key': {
-                'pattern': r'SG\.[a-zA-Z0-9_\-\.]{66}',
+                'pattern': r'SG\.[a-zA-Z0-9_-]{22}\.[a-zA-Z0-9_-]{43}',
                 'severity': 'High',
                 'description': 'SendGrid API Key'
             },
@@ -279,7 +287,12 @@ class CredentialScraper(BaseModule):
                         secrets = await self._extract_secrets(content, target, response.headers)
                         
                         for secret in secrets:
-                            findings.append({
+                            # Add validation if enabled
+                            validation_result = None
+                            if self.validation_enabled:
+                                validation_result = await self._validate_secret(secret)
+                            
+                            finding = {
                                 'type': 'Secret Discovery',
                                 'severity': secret['severity'],
                                 'secret_type': secret['type'],
@@ -288,8 +301,18 @@ class CredentialScraper(BaseModule):
                                 'context': secret.get('context', ''),
                                 'confidence': secret.get('confidence', 1.0),
                                 'location': secret.get('location', 'content'),
-                                'target': target
-                            })
+                                'target': target,
+                                'response_time': 0.0  # Will be updated by stats manager
+                            }
+                            
+                            if validation_result:
+                                finding['validation'] = validation_result
+                                finding['service'] = validation_result.get('service', secret['type'])
+                                # Increase severity if validation is successful
+                                if validation_result.get('valid'):
+                                    finding['severity'] = 'Critical'
+                            
+                            findings.append(finding)
                 
                 # Also check common sensitive file paths
                 sensitive_paths = [
@@ -494,6 +517,52 @@ class CredentialScraper(BaseModule):
             return 'Medium'
         
         return 'Low'
+    
+    async def _validate_secret(self, secret: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Validate extracted secret using appropriate validator"""
+        secret_type = secret.get('type', '')
+        value = secret.get('value', '')
+        
+        try:
+            if secret_type == 'sendgrid_api_key' and value.startswith('SG.'):
+                return await self.sendgrid_validator.validate(value)
+            
+            elif secret_type == 'aws_access_key' and value.startswith(('AKIA', 'ASIA')):
+                # Look for corresponding secret key in the same context
+                context = secret.get('context', '')
+                secret_key = self._extract_aws_secret_from_context(context, value)
+                if secret_key:
+                    return await self.aws_ses_validator.validate(value, secret_key)
+            
+            # Add more validators as needed
+            return None
+            
+        except Exception as e:
+            self.logger.debug(f"Validation error for {secret_type}: {str(e)}")
+            return None
+    
+    def _extract_aws_secret_from_context(self, context: str, access_key: str) -> Optional[str]:
+        """Try to extract AWS secret key from the same context as access key"""
+        # Look for common patterns of AWS secret keys near access keys
+        secret_patterns = [
+            r'aws_secret_access_key["\']?\s*[:=]\s*["\']?([A-Za-z0-9/+=]{40})["\']?',
+            r'secret_access_key["\']?\s*[:=]\s*["\']?([A-Za-z0-9/+=]{40})["\']?',
+            r'aws_secret["\']?\s*[:=]\s*["\']?([A-Za-z0-9/+=]{40})["\']?',
+        ]
+        
+        for pattern in secret_patterns:
+            matches = re.findall(pattern, context, re.IGNORECASE)
+            if matches:
+                return matches[0]
+        
+        # Try to find any 40-character base64-like string in the context
+        base64_pattern = r'[A-Za-z0-9/+=]{40}'
+        matches = re.findall(base64_pattern, context)
+        for match in matches:
+            if match != access_key:  # Don't return the access key itself
+                return match
+        
+        return None
     
     # Parser methods
     def _parse_json(self, content: str) -> Dict[str, Any]:
