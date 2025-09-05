@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceCracker V2 - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-card h3 {
+            margin-bottom: 10px;
+            color: #00ffff;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ff00;
+        }
+        
+        .control-panel {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .control-panel h2 {
+            margin-bottom: 20px;
+            color: #ffff00;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #00ffff;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            border-radius: 5px;
+        }
+        
+        .btn {
+            background: #0a0a0a;
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #00ff00;
+            color: #0a0a0a;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        
+        .results-panel {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .results-panel h2 {
+            margin-bottom: 20px;
+            color: #ffff00;
+        }
+        
+        .hit-item {
+            background: #0a0a0a;
+            border: 1px solid #ff0000;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        
+        .hit-item .hit-type {
+            color: #ff0000;
+            font-weight: bold;
+        }
+        
+        .hit-item .hit-url {
+            color: #00ffff;
+            margin-top: 5px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-running {
+            background: #00ff00;
+            box-shadow: 0 0 5px #00ff00;
+        }
+        
+        .status-stopped {
+            background: #ff0000;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #0a0a0a;
+            border: 1px solid #00ff00;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #00ffff);
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 SpaceCracker V2</h1>
+        <p>Advanced Credential Scanner & Exploitation Framework</p>
+    </div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>🎯 Hits Found</h3>
+            <div class="stat-value" id="hits">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>🔍 URLs Checked</h3>
+            <div class="stat-value" id="checked-urls">0</div>
+        </div>
+        <div class="stat-card">
+            <h3>⚙️ Threads</h3>
+            <div class="stat-value" id="threads">5000</div>
+        </div>
+        <div class="stat-card">
+            <h3>📊 Status</h3>
+            <div class="stat-value">
+                <span class="status-indicator" id="status-indicator"></span>
+                <span id="status">Idle</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <h2>🎮 Control Panel</h2>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <div class="form-group">
+                    <label for="targets-file">Targets File:</label>
+                    <input type="file" id="targets-file" accept=".txt">
+                </div>
+                <div class="form-group">
+                    <label for="threads-input">Threads:</label>
+                    <input type="number" id="threads-input" value="5000" min="1" max="10000">
+                </div>
+                <div class="form-group">
+                    <label for="timeout-input">Timeout:</label>
+                    <input type="number" id="timeout-input" value="20" min="1" max="60">
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label for="exploits-select">Exploits:</label>
+                    <select id="exploits-select">
+                        <option value="none">None</option>
+                        <option value="docker">Docker</option>
+                        <option value="k8s">Kubernetes</option>
+                        <option value="all">All</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="telegram-checkbox"> Send to Telegram
+                    </label>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="btn" onclick="startScan()">🚀 Start Scan</button>
+                    <button class="btn" onclick="stopScan()">⏹️ Stop Scan</button>
+                    <button class="btn" onclick="clearResults()">🗑️ Clear Results</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-panel">
+        <h2>🎯 Results</h2>
+        <div id="results-container">
+            <p style="color: #666;">No results yet. Start a scan to see hits.</p>
+        </div>
+    </div>
+
+    <script>
+        let ws;
+        let scanActive = false;
+
+        function connectWebSocket() {
+            ws = new WebSocket(`ws://${window.location.host}/ws`);
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                if (data.type === 'stats_update') {
+                    updateStats(data.data);
+                } else if (data.type === 'new_hit') {
+                    addHit(data.data);
+                }
+            };
+            
+            ws.onclose = function() {
+                setTimeout(connectWebSocket, 3000);
+            };
+        }
+
+        function updateStats(stats) {
+            document.getElementById('hits').textContent = stats.hits;
+            document.getElementById('checked-urls').textContent = stats.checked_urls;
+            document.getElementById('threads').textContent = stats.threads;
+            document.getElementById('status').textContent = stats.status;
+            
+            const indicator = document.getElementById('status-indicator');
+            const progress = document.getElementById('progress');
+            
+            if (stats.status === 'running') {
+                indicator.className = 'status-indicator status-running';
+                progress.style.width = `${stats.progress || 0}%`;
+            } else {
+                indicator.className = 'status-indicator status-stopped';
+                progress.style.width = '0%';
+            }
+        }
+
+        function addHit(hit) {
+            const container = document.getElementById('results-container');
+            if (container.children.length === 1 && container.children[0].tagName === 'P') {
+                container.innerHTML = '';
+            }
+            
+            const hitElement = document.createElement('div');
+            hitElement.className = 'hit-item';
+            hitElement.innerHTML = `
+                <div class="hit-type">${hit.type.toUpperCase()} - ${hit.service}</div>
+                <div class="hit-url">${hit.url}</div>
+                <div style="margin-top: 10px; color: #999;">
+                    Crack ID: #${hit.crack_id} | Confidence: ${hit.confidence}
+                </div>
+            `;
+            
+            container.insertBefore(hitElement, container.firstChild);
+        }
+
+        async function startScan() {
+            if (scanActive) return;
+            
+            const config = {
+                threads: parseInt(document.getElementById('threads-input').value),
+                timeout: parseInt(document.getElementById('timeout-input').value),
+                exploits: document.getElementById('exploits-select').value,
+                telegram: document.getElementById('telegram-checkbox').checked
+            };
+            
+            try {
+                const response = await fetch('/api/scan/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(config)
+                });
+                
+                if (response.ok) {
+                    scanActive = true;
+                    document.getElementById('status').textContent = 'Starting...';
+                }
+            } catch (error) {
+                console.error('Error starting scan:', error);
+            }
+        }
+
+        async function stopScan() {
+            try {
+                const response = await fetch('/api/scan/stop', {method: 'POST'});
+                if (response.ok) {
+                    scanActive = false;
+                    document.getElementById('status').textContent = 'Stopped';
+                }
+            } catch (error) {
+                console.error('Error stopping scan:', error);
+            }
+        }
+
+        function clearResults() {
+            const container = document.getElementById('results-container');
+            container.innerHTML = '<p style="color: #666;">No results yet. Start a scan to see hits.</p>';
+        }
+
+        // Initialize WebSocket connection
+        connectWebSocket();
+    </script>
+</body>
+</html>

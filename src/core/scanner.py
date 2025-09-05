@@ -82,27 +82,30 @@ class Scanner:
     
     async def extract_credentials(self, content: str, url: str) -> List[Dict]:
         """Extract credentials from content using all extractors"""
-        # This will be implemented with proper extractors
+        # Import extractors
+        from ..extractors.aws_extractor import AWSExtractor
+        from ..extractors.sendgrid_extractor import SendGridExtractor
+        from ..extractors.smtp_extractor import SMTPExtractor
+        from ..extractors.mailgun_extractor import MailgunExtractor
+        
         credentials = []
         
-        # Basic patterns for now - will be replaced with proper extractors
-        aws_patterns = [
-            r'AKIA[0-9A-Z]{16}',  # AWS Access Key
-            r'[A-Za-z0-9/+=]{40}'  # AWS Secret Key (basic pattern)
+        # Initialize extractors
+        extractors = [
+            AWSExtractor(),
+            SendGridExtractor(),
+            SMTPExtractor(),
+            MailgunExtractor(),
         ]
         
-        # Simple pattern matching for demonstration
-        import re
-        for pattern in aws_patterns:
-            matches = re.findall(pattern, content)
-            for match in matches:
-                if match:
-                    credentials.append({
-                        'type': 'aws',
-                        'value': match,
-                        'source_url': url,
-                        'severity': 'high'
-                    })
+        # Run all extractors
+        for extractor in extractors:
+            try:
+                extracted = extractor.extract(content, url)
+                credentials.extend(extracted)
+            except Exception as e:
+                # Log error but continue with other extractors
+                pass
         
         return credentials
     
