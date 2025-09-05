@@ -1,10 +1,11 @@
 import threading
 import queue
 import time
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .rate_limiter import RateLimiter
 from .config import Config
 from .registry import ModuleRegistry
+from .stats_manager import StatsManager
 
 class ScanRunner:
     """Orchestrates the scanning process with multiple modules"""
@@ -16,9 +17,21 @@ class ScanRunner:
             config.rate_limit.burst
         )
         self.registry = ModuleRegistry()
+        self.stats_manager: Optional[StatsManager] = None
         
-    def run_scan(self, targets: List[str]) -> Dict[str, Any]:
+    def run_scan(self, targets: List[str], show_stats: bool = True) -> Dict[str, Any]:
         """Run scan against multiple targets"""
+        # Initialize stats manager
+        if show_stats:
+            self.stats_manager = StatsManager(total_targets=len(targets))
+            self.stats_manager.update_stats(
+                total_urls=len(targets),
+                threads=self.config.threads,
+                timeout=30,  # Default timeout
+                status="running"
+            )
+            self.stats_manager.start_display()
+        
         results = {
             "metadata": {
                 "started_at": time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -68,6 +81,17 @@ class ScanRunner:
         results["metadata"]["finished_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
         results["summary"] = self._calculate_summary(results)
         
+        # Stop stats display
+        if self.stats_manager:
+            self.stats_manager.update_stats(status="completed")
+            self.stats_manager.stop_display()
+            
+            # Print final hits if any
+            for finding in results["findings"]:
+                if finding.get('validation', {}).get('valid'):
+                    hit_report = self.stats_manager.format_hit_report(finding)
+                    print(f"\n{hit_report}\n")
+        
         return results
     
     def _worker_thread(self, work_queue: queue.Queue, result_queue: queue.Queue):
@@ -79,6 +103,13 @@ class ScanRunner:
                 # Rate limiting
                 self.rate_limiter.acquire()
                 
+                # Update stats
+                if self.stats_manager:
+                    self.stats_manager.update_stats(
+                        current_target=target,
+                        checked_urls=1
+                    )
+                
                 # Create module instance
                 module = self.registry.create_module(module_id, self.config)
                 
@@ -89,10 +120,30 @@ class ScanRunner:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
                         
+                        start_time = time.time()
                         result = loop.run_until_complete(
                             module.run(target, self.config, {})
                         )
+                        response_time = time.time() - start_time
+                        
+                        # Update response time in findings
+                        for finding in result.get('findings', []):
+                            finding['response_time'] = response_time
+                        
                         result_queue.put(result)
+                        
+                        # Update stats with findings
+                        if self.stats_manager and result.get('findings'):
+                            valid_findings = [f for f in result['findings'] if f.get('validation', {}).get('valid')]
+                            if valid_findings:
+                                self.stats_manager.update_stats(hits=len(valid_findings))
+                                
+                                # Update findings by service
+                                findings_by_service = {}
+                                for finding in valid_findings:
+                                    service = finding.get('service', 'unknown')
+                                    findings_by_service[service] = findings_by_service.get(service, 0) + 1
+                                self.stats_manager.update_stats(findings_by_service=findings_by_service)
                         
                         loop.close()
                         
