@@ -7,10 +7,27 @@
     
     <!-- Stylesheets -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons - Using local fallback -->
+    <style>
+        /* Font Awesome fallback styles */
+        .fas, .fa {
+            display: inline-block;
+            font-family: 'Font Awesome 6 Free', serif;
+            font-weight: 900;
+            font-style: normal;
+        }
+        .fas.fa-rocket::before { content: "🚀"; }
+        .fas.fa-tachometer-alt::before { content: "📊"; }
+        .fas.fa-search::before { content: "🔍"; }
+        .fas.fa-list-alt::before { content: "📋"; }
+        .fas.fa-cog::before { content: "⚙️"; }
+        .fas.fa-chart-bar::before { content: "📈"; }
+        .fas.fa-download::before { content: "⬇️"; }
+        .fas.fa-crosshairs::before { content: "🎯"; }
+        .fas.fa-globe::before { content: "🌐"; }
+        .fas.fa-sliders-h::before { content: "🎛️"; }
+        .fas.fa-bars::before { content: "☰"; }
+    </style>
     
     {% block head %}{% endblock %}
 </head>
@@ -49,13 +66,13 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" onclick="toggleSidebar()">
+                    <a href="#" onclick="showAnalytics()">
                         <i class="fas fa-chart-bar"></i>
                         Analytics
                     </a>
                 </li>
                 <li>
-                    <a href="#" onclick="toggleSidebar()">
+                    <a href="#" onclick="showDownloads()">
                         <i class="fas fa-download"></i>
                         Downloads
                     </a>
@@ -63,8 +80,8 @@
             </ul>
             
             <div class="sidebar-footer">
-                <div style="padding: 2rem; text-align: center; border-top: 1px solid var(--border-color);">
-                    <p class="text-muted small">v3.1 Pro Edition</p>
+                <div style="padding: 2rem; text-align: center; border-top: 1px solid var(--glass-border);">
+                    <p class="text-muted small">v3.2 Pro Edition</p>
                     <p class="text-muted small">© 2024 SpaceCracker</p>
                 </div>
             </div>
@@ -89,7 +106,7 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='js/charts.js') }}"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
