@@ -1,0 +1,169 @@
+# SpaceCracker V2 - Common Scan Paths
+# Comprehensive list of paths to test during scanning
+
+# Configuration Files
+config_files:
+  - /.env
+  - /.env.local
+  - /.env.production
+  - /.env.staging
+  - /.env.development
+  - /config.json
+  - /config.yml
+  - /config.yaml
+  - /settings.json
+  - /settings.yml
+  - /app.json
+  - /app.yml
+  - /credentials.json
+  - /auth.json
+  - /secrets.json
+  - /keys.json
+
+# Web Application Files
+web_files:
+  - /wp-config.php
+  - /wp-config.php.save
+  - /wp-config.php.bak
+  - /configuration.php
+  - /database.php
+  - /includes/config.php
+  - /admin/config.php
+  - /application/config/database.php
+  - /app/config/database.yml
+  - /config/database.yml
+  - /config/app.php
+
+# Cloud Configuration
+cloud_configs:
+  - /.aws/credentials
+  - /.aws/config
+  - /.gcp/credentials.json
+  - /google-credentials.json
+  - /service-account.json
+  - /azure.json
+  - /.azure/credentials
+
+# SSH and Security Keys
+ssh_keys:
+  - /.ssh/id_rsa
+  - /.ssh/id_dsa
+  - /.ssh/id_ecdsa
+  - /.ssh/id_ed25519
+  - /.ssh/config
+  - /.ssh/authorized_keys
+  - /.ssh/known_hosts
+  - /home/ubuntu/.ssh/id_rsa
+  - /root/.ssh/id_rsa
+
+# Container Configuration
+container_configs:
+  - /docker-compose.yml
+  - /docker-compose.yaml
+  - /docker-compose.override.yml
+  - /Dockerfile
+  - /.dockerignore
+  - /kubernetes.yaml
+  - /k8s-config.yaml
+  - /deployment.yaml
+  - /.kube/config
+
+# Database Files
+database_files:
+  - /backup.sql
+  - /dump.sql
+  - /database.sql
+  - /db.sql
+  - /mysql.sql
+  - /postgres.sql
+  - /mongodb.conf
+  - /redis.conf
+
+# Build and Deployment
+build_files:
+  - /package.json
+  - /composer.json
+  - /requirements.txt
+  - /Gemfile
+  - /Cargo.toml
+  - /pom.xml
+  - /build.gradle
+  - /yarn.lock
+  - /package-lock.json
+
+# Infrastructure as Code
+iac_files:
+  - /terraform.tfvars
+  - /.terraform.tfvars
+  - /variables.tf
+  - /main.tf
+  - /ansible.cfg
+  - /inventory.yml
+  - /playbook.yml
+  - /cloudformation.json
+  - /cloudformation.yml
+
+# Backup and Temporary Files
+backup_files:
+  - /backup.tar.gz
+  - /backup.zip
+  - /site-backup.sql
+  - /database-backup.sql
+  - /.DS_Store
+  - /Thumbs.db
+  - /.git-credentials
+  - /.netrc
+  - /.htpasswd
+
+# Admin and Debug
+admin_files:
+  - /admin/
+  - /administrator/
+  - /phpmyadmin/
+  - /phpinfo.php
+  - /info.php
+  - /test.php
+  - /debug.php
+  - /status.php
+  - /health.php
+
+# API Documentation and Config
+api_files:
+  - /swagger.json
+  - /swagger.yml
+  - /openapi.json
+  - /openapi.yml
+  - /api-docs.json
+  - /postman.json
+  - /insomnia.json
+
+# Git and Version Control
+git_files:
+  - /.git/
+  - /.git/config
+  - /.git/HEAD
+  - /.git/index
+  - /.git/logs/HEAD
+  - /.gitignore
+  - /.gitconfig
+  - /.svn/
+  - /.hg/
+  - /.bzr/
+
+# Common Extensions to Test
+file_extensions:
+  - .txt
+  - .log
+  - .conf
+  - .ini
+  - .cfg
+  - .properties
+  - .xml
+  - .json
+  - .yml
+  - .yaml
+  - .env
+  - .bak
+  - .old
+  - .save
+  - .tmp

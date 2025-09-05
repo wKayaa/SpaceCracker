@@ -1,0 +1,150 @@
+# SpaceCracker V2 - Main Configuration
+# Professional credential scanner configuration
+
+# Scanner Settings
+scanner:
+  threads: 5000
+  timeout: 20
+  rate_limit: 50  # requests per second
+  burst: 100
+  user_agent: "SpaceCracker-V2/2.0 (Professional Security Scanner)"
+  follow_redirects: false
+  verify_ssl: false
+  max_retries: 3
+  
+# Target Configuration
+targets:
+  max_targets: 250000
+  input_formats:
+    - txt
+    - csv
+    - json
+  batch_size: 1000
+  
+# Output Configuration
+output:
+  directory: "results"
+  formats:
+    - json
+    - csv
+    - txt
+    - html
+  real_time_display: true
+  crack_id_generation: true
+  
+# Statistics Configuration
+statistics:
+  enabled: true
+  refresh_rate: 2.0  # seconds
+  display_format: "detailed"
+  crack_id_format: "#YYYYMMDDHH{counter:02d}"
+  
+# Validation Configuration
+validation:
+  enabled: true
+  timeout: 10
+  parallel_validation: true
+  services:
+    aws_ses:
+      enabled: true
+      check_quota: true
+      check_regions: true
+      max_regions: 12
+    sendgrid:
+      enabled: true
+      check_account_details: true
+      check_reputation: true
+    mailgun:
+      enabled: true
+    mailjet:
+      enabled: true
+    stripe:
+      enabled: true
+    github:
+      enabled: true
+    smtp:
+      enabled: true
+      test_connection: true
+      
+# Modules Configuration
+modules:
+  enabled_modules:
+    - ggb_scanner
+    - git_scanner
+    - js_scanner
+    - credential_scraper
+    - cve_exploits
+    - path_scanner
+    - smtp_scanner
+    
+  module_settings:
+    ggb_scanner:
+      github_api_rate_limit: 5000
+      search_depth: 5
+      check_releases: true
+      check_issues: true
+      check_commits: true
+    git_scanner:
+      reconstruction_enabled: true
+      max_objects: 1000
+      sensitive_files_priority: true
+    js_scanner:
+      beautify_minified: true
+      max_file_size: "5MB"
+      endpoint_extraction: true
+      config_object_analysis: true
+    credential_scraper:
+      min_entropy: 4.0
+      context_analysis: true
+      validation_integration: true
+      
+# Web Panel Configuration
+web_panel:
+  enabled: true
+  host: "127.0.0.1"
+  port: 8080
+  ssl:
+    enabled: false
+    cert_file: ""
+    key_file: ""
+  authentication:
+    enabled: false
+    username: "admin"
+    password: "spacecracker2025"
+  websocket:
+    enabled: true
+    heartbeat_interval: 30
+    
+# Telegram Notifications
+telegram:
+  enabled: false
+  bot_token: ""
+  chat_id: ""
+  notifications:
+    scan_start: true
+    hits_found: true
+    scan_complete: true
+    critical_findings: true
+    
+# Performance Settings
+performance:
+  mode: "high"  # low, normal, high, vps, ultra, auto
+  memory_limit: "2GB"
+  cpu_cores: "auto"
+  connection_pool_size: 100
+  dns_cache_ttl: 300
+  
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+  file: "spacecracker.log"
+  max_size: "100MB"
+  backup_count: 5
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  
+# Security Settings
+security:
+  obfuscate_credentials: true
+  secure_output: true
+  audit_trail: true
+  rate_limit_bypass_detection: true

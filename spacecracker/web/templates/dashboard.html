@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpaceCracker V2 - Real-time Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-family: 'Arial', sans-serif;
+        }
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #00ff88;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .hit-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #ff4757;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+        }
+        .connected {
+            background: #2ed573;
+            color: white;
+        }
+        .disconnected {
+            background: #ff4757;
+            color: white;
+        }
+        .crack-id {
+            font-family: 'Courier New', monospace;
+            color: #ffa726;
+        }
+        .progress-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 2px;
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #00ff88, #00d4ff);
+            height: 25px;
+            border-radius: 8px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">
+        <i class="fas fa-circle"></i> Disconnected
+    </div>
+
+    <div class="container-fluid mt-3">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="text-center mb-4">
+                    <i class="fas fa-satellite-dish"></i> SpaceCracker V2 Dashboard
+                </h1>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Current Scan Stats -->
+            <div class="col-lg-8">
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-chart-line"></i> Real-time Statistics</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <div class="stat-value" id="crackId">#2025090501</div>
+                                <div class="stat-label">Crack ID</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-card">
+                                <div class="stat-value" id="status">Running</div>
+                                <div class="stat-label">Status</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-value" id="hits">0</div>
+                                <div class="stat-label">💥 Hits</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-value" id="checkedPaths">0</div>
+                                <div class="stat-label">🔍 Checked Paths</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-value" id="checkedUrls">0</div>
+                                <div class="stat-label">🌐 Checked URLs</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-value" id="avgSpeed">0</div>
+                                <div class="stat-label">⚡ AVG Speed/sec</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <h5>Progress</h5>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar" style="width: 0%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between mt-2">
+                            <span id="progressText">0.00%</span>
+                            <span id="etaText">ETA: calculating...</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <strong>Current Target:</strong> <span id="currentTarget">None</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Hits -->
+            <div class="col-lg-4">
+                <div class="dashboard-card">
+                    <h3><i class="fas fa-bullseye"></i> Recent Hits</h3>
+                    <div id="recentHits">
+                        <div class="text-center mt-4">
+                            <i class="fas fa-search fa-3x opacity-50"></i>
+                            <p class="mt-2">No hits yet...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row">
+            <div class="col-12">
+                <div class="dashboard-card text-center">
+                    <button class="btn btn-success btn-lg me-3" onclick="startDemo()">
+                        <i class="fas fa-play"></i> Start Demo Scan
+                    </button>
+                    <button class="btn btn-info btn-lg me-3" onclick="demoStats()">
+                        <i class="fas fa-chart-bar"></i> Demo Stats Update
+                    </button>
+                    <button class="btn btn-warning btn-lg me-3" onclick="demoHit()">
+                        <i class="fas fa-bullseye"></i> Demo Hit
+                    </button>
+                    <button class="btn btn-danger btn-lg" onclick="stopDemo()">
+                        <i class="fas fa-stop"></i> Stop Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let socket = null;
+        let isConnected = false;
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            socket = new WebSocket(wsUrl);
+            
+            socket.onopen = function(event) {
+                isConnected = true;
+                updateConnectionStatus();
+                console.log('WebSocket connected');
+            };
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+            
+            socket.onclose = function(event) {
+                isConnected = false;
+                updateConnectionStatus();
+                console.log('WebSocket disconnected');
+                
+                // Reconnect after 3 seconds
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            socket.onerror = function(error) {
+                console.error('WebSocket error:', error);
+            };
+        }
+
+        function updateConnectionStatus() {
+            const statusEl = document.getElementById('connectionStatus');
+            if (isConnected) {
+                statusEl.className = 'connection-status connected';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i> Connected';
+            } else {
+                statusEl.className = 'connection-status disconnected';
+                statusEl.innerHTML = '<i class="fas fa-circle"></i> Disconnected';
+            }
+        }
+
+        function handleWebSocketMessage(data) {
+            console.log('Received:', data);
+            
+            if (data.type === 'stats_update') {
+                updateStats(data);
+            } else if (data.type === 'new_hit') {
+                addNewHit(data);
+            } else if (data.type === 'scan_started') {
+                console.log('Scan started:', data.scan_id);
+            } else if (data.type === 'scan_stopped') {
+                console.log('Scan stopped:', data.scan_id);
+            }
+        }
+
+        function updateStats(data) {
+            document.getElementById('crackId').textContent = data.crack_id || '#2025090501';
+            document.getElementById('hits').textContent = (data.hits || 0).toLocaleString();
+            document.getElementById('checkedPaths').textContent = (data.checked_paths || 0).toLocaleString();
+            document.getElementById('checkedUrls').textContent = (data.checked_urls || 0).toLocaleString();
+            document.getElementById('avgSpeed').textContent = (data.avg_checks_per_sec || 0).toLocaleString();
+            document.getElementById('currentTarget').textContent = data.current_target || 'None';
+            document.getElementById('status').textContent = data.status || 'Running';
+            
+            // Update progress
+            const progress = data.progression || 0;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressText').textContent = progress.toFixed(2) + '%';
+            
+            // Calculate ETA (simplified)
+            const eta = Math.floor(Math.random() * 3600); // Demo ETA
+            const hours = Math.floor(eta / 3600);
+            const minutes = Math.floor((eta % 3600) / 60);
+            const seconds = eta % 60;
+            document.getElementById('etaText').textContent = 
+                `ETA: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function addNewHit(data) {
+            const hitsContainer = document.getElementById('recentHits');
+            
+            // Clear "no hits" message
+            if (hitsContainer.innerHTML.includes('No hits yet')) {
+                hitsContainer.innerHTML = '';
+            }
+            
+            const hitElement = document.createElement('div');
+            hitElement.className = 'hit-item';
+            hitElement.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <strong class="crack-id">${data.crack_id}</strong>
+                        <div class="small">${data.service.toUpperCase()} - ${data.severity}</div>
+                        <div class="small text-truncate" style="max-width: 200px;">${data.url}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="small">${data.response_time}s</div>
+                        <div class="small">${new Date().toLocaleTimeString()}</div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to top of list
+            hitsContainer.insertBefore(hitElement, hitsContainer.firstChild);
+            
+            // Keep only last 10 hits
+            while (hitsContainer.children.length > 10) {
+                hitsContainer.removeChild(hitsContainer.lastChild);
+            }
+        }
+
+        // Demo functions
+        function startDemo() {
+            fetch('/api/scan/start', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    targets: ['https://example.com', 'https://test.com'],
+                    modules: ['ggb_scanner', 'git_scanner', 'js_scanner']
+                })
+            });
+        }
+
+        function demoStats() {
+            fetch('/api/demo/stats', {method: 'POST'});
+        }
+
+        function demoHit() {
+            fetch('/api/demo/hit', {method: 'POST'});
+        }
+
+        function stopDemo() {
+            fetch('/api/scan/stop/demo123', {method: 'POST'});
+        }
+
+        // Connect when page loads
+        window.addEventListener('load', function() {
+            connectWebSocket();
+        });
+    </script>
+</body>
+</html>

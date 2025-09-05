@@ -1,0 +1,52 @@
+# SpaceCracker V2 - Service-Specific Configuration
+# Detailed configuration for each supported service
+
+# Email Services
+email_services:
+  aws_ses:
+    description: "Amazon Simple Email Service"
+    validation_methods:
+      - "boto3.client('ses').get_send_quota()"
+      - "boto3.client('ses').list_verified_email_addresses()"
+      - "boto3.client('sns').list_topics()"
+    regions:
+      - us-east-1
+      - us-west-2
+      - eu-west-1
+      - eu-central-1
+      - ap-south-1
+      - ap-southeast-2
+      - ca-central-1
+      - ap-northeast-1
+      - eu-north-1
+      - me-south-1
+      - sa-east-1
+    quota_thresholds:
+      sandbox: 200
+      production: 50000
+    severity_mapping:
+      sandbox: "High"
+      production: "Critical"
+      full_access: "Critical"
+      
+  sendgrid:
+    description: "SendGrid Email API"
+    api_base: "https://api.sendgrid.com/v3"
+    validation_endpoints:
+      - "/user/account"
+      - "/user/profile"
+      - "/stats"
+      - "/verified_senders"
+      - "/templates"
+      - "/user/webhooks/event/settings"
+    rate_limits:
+      free: 100
+      essentials: 3000
+      pro: 3000
+    features_to_check:
+      - reputation
+      - credits
+      - verified_senders
+      - templates
+      - webhooks
+      - monthly_sends
