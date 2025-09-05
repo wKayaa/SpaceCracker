@@ -14,6 +14,71 @@ class SpaceCrackerUI {
         this.startStatsUpdates();
         this.setupFileUploads();
         this.setupFormValidation();
+        this.loadModules();
+    }
+
+    async loadModules() {
+        const modulesList = document.getElementById('modulesList');
+        if (!modulesList) return;
+
+        try {
+            const response = await fetch('/api/modules');
+            const data = await response.json();
+            
+            if (data.modules) {
+                modulesList.innerHTML = this.renderModules(data.modules);
+                this.setupModuleEventListeners();
+            }
+        } catch (error) {
+            console.error('Error loading modules:', error);
+            modulesList.innerHTML = '<p class="text-danger">Error loading modules</p>';
+        }
+    }
+
+    renderModules(modules) {
+        return modules.map(module => `
+            <div class="form-group">
+                <label class="module-option ${module.enabled ? 'enabled' : 'disabled'}">
+                    <input type="checkbox" name="modules" value="${module.name}" 
+                           class="form-check-input" ${module.enabled ? 'checked' : ''}>
+                    <div class="module-info">
+                        <div class="module-header">
+                            <strong>${module.name}</strong>
+                            <span class="badge badge-${this.getSeverityClass(module.severity)}">${module.severity}</span>
+                        </div>
+                        <small class="text-muted d-block">${module.description}</small>
+                        <small class="text-info">${module.category}</small>
+                    </div>
+                </label>
+            </div>
+        `).join('');
+    }
+
+    getSeverityClass(severity) {
+        const map = {
+            'Critical': 'danger',
+            'High': 'warning',
+            'Medium': 'info',
+            'Low': 'secondary'
+        };
+        return map[severity] || 'secondary';
+    }
+
+    setupModuleEventListeners() {
+        const selectAllBtn = document.getElementById('selectAllModules');
+        const selectNoneBtn = document.getElementById('selectNoneModules');
+        
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                document.querySelectorAll('input[name="modules"]').forEach(cb => cb.checked = true);
+            });
+        }
+        
+        if (selectNoneBtn) {
+            selectNoneBtn.addEventListener('click', () => {
+                document.querySelectorAll('input[name="modules"]').forEach(cb => cb.checked = false);
+            });
+        }
     }
 
     setupEventListeners() {
@@ -155,6 +220,7 @@ class SpaceCrackerUI {
         try {
             const targets = this.getTargets();
             const modules = this.getSelectedModules();
+            const options = this.getScanOptions();
 
             if (!targets.length) {
                 this.showAlert('Please provide at least one target', 'warning');
@@ -166,24 +232,36 @@ class SpaceCrackerUI {
                 return;
             }
 
-            const response = await fetch('/api/scan/start', {
+            // Use CLI backend for better performance
+            const response = await fetch('/api/cli/scan', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     targets: targets,
-                    modules: modules
+                    options: {
+                        modules: modules,
+                        ...options
+                    }
                 })
             });
 
             const result = await response.json();
 
-            if (response.ok) {
+            if (result.success) {
                 this.scanInProgress = true;
-                this.showAlert('Scan started successfully!', 'success');
+                this.showAlert(`Scan started successfully! Scan ID: ${result.scan_id}`, 'success');
                 this.updateScanUI(true);
                 this.startScanProgress();
+                
+                // Store scan ID for status tracking
+                this.currentScanId = result.scan_id;
+                
+                // Show CLI command for reference
+                if (result.command) {
+                    console.log('CLI Command:', result.command);
+                }
             } else {
                 this.showAlert(result.error || 'Failed to start scan', 'danger');
             }
@@ -191,6 +269,19 @@ class SpaceCrackerUI {
         } catch (error) {
             this.showAlert('Error starting scan: ' + error.message, 'danger');
         }
+    }
+
+    getScanOptions() {
+        const form = document.getElementById('scanForm');
+        if (!form) return {};
+
+        return {
+            threads: parseInt(form.querySelector('input[name="threads"]')?.value || 50),
+            timeout: parseInt(form.querySelector('input[name="timeout"]')?.value || 30),
+            rate_limit: parseFloat(form.querySelector('input[name="rate_limit"]')?.value || 10),
+            recursive: form.querySelector('input[name="recursive"]')?.checked || false,
+            auto_exploit: form.querySelector('input[name="auto_exploit"]')?.checked || false
+        };
     }
 
     async stopScan() {
@@ -493,3 +584,134 @@ function confirmAction(message, callback) {
         callback();
     }
 }
+
+// New enhanced functions
+function showAnalytics() {
+    // Show analytics modal or navigate to analytics page
+    window.spaceCrackerUI.showAlert('Analytics feature coming soon!', 'info');
+}
+
+function showDownloads() {
+    // Show downloads modal
+    window.spaceCrackerUI.showAlert('Downloads feature available in Results page', 'info');
+}
+
+// Enhanced CLI integration functions
+async function startCliScan(targets, options = {}) {
+    try {
+        const response = await fetch('/api/cli/scan', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                targets: targets,
+                options: options
+            })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            window.spaceCrackerUI.showAlert('Scan started successfully!', 'success');
+            return result.scan_id;
+        } else {
+            throw new Error(result.error || 'Unknown error');
+        }
+    } catch (error) {
+        window.spaceCrackerUI.showAlert('Error starting scan: ' + error.message, 'danger');
+        throw error;
+    }
+}
+
+// Enhanced theme and visual effects
+function initializeVisualEffects() {
+    // Add particle background effect
+    createParticleBackground();
+    
+    // Add smooth scrolling
+    document.documentElement.style.scrollBehavior = 'smooth';
+    
+    // Add intersection observer for animations
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    // Observe all cards and main elements
+    document.querySelectorAll('.card, .stats-grid > div').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'all 0.6s ease';
+        observer.observe(el);
+    });
+}
+
+function createParticleBackground() {
+    const canvas = document.createElement('canvas');
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+    canvas.style.pointerEvents = 'none';
+    canvas.style.zIndex = '-1';
+    canvas.style.opacity = '0.1';
+    document.body.appendChild(canvas);
+    
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const particles = [];
+    const particleCount = 50;
+    
+    for (let i = 0; i < particleCount; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            vy: (Math.random() - 0.5) * 0.5,
+            size: Math.random() * 2 + 1
+        });
+    }
+    
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'rgba(195, 7, 63, 0.5)';
+        
+        particles.forEach(particle => {
+            particle.x += particle.vx;
+            particle.y += particle.vy;
+            
+            if (particle.x < 0 || particle.x > canvas.width) particle.vx *= -1;
+            if (particle.y < 0 || particle.y > canvas.height) particle.vy *= -1;
+            
+            ctx.beginPath();
+            ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+            ctx.fill();
+        });
+        
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
+    
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+}
+
+// Initialize visual effects when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initializeVisualEffects, 100);
+});

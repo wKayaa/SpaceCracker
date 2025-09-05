@@ -112,22 +112,11 @@
                         <button type="button" id="selectNoneModules" class="btn btn-secondary">None</button>
                     </div>
                 </div>
-                <div class="card-body">
-                    {% for module_id, module_info in available_modules.items() %}
-                    <div class="form-group">
-                        <label class="module-option">
-                            <input type="checkbox" name="modules" value="{{ module_id }}" class="form-check-input"
-                                   {% if module_id in config.modules %}checked{% endif %}>
-                            <div class="module-info">
-                                <strong>{{ module_info.name }}</strong>
-                                <small class="text-muted d-block">{{ module_info.description }}</small>
-                                {% if module_info.supports_batch %}
-                                <span class="badge badge-low">Batch Mode</span>
-                                {% endif %}
-                            </div>
-                        </label>
+                <div class="card-body" id="modulesList">
+                    <!-- Modules will be loaded dynamically -->
+                    <div class="loading-modules">
+                        <p class="text-muted">Loading available modules...</p>
                     </div>
-                    {% endfor %}
                 </div>
             </div>
 

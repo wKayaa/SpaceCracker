@@ -38,11 +38,11 @@ def create_app(config_file: str = None) -> Flask:
     # Error handlers
     @app.errorhandler(404)
     def not_found(error):
-        return render_template('errors/404.html'), 404
+        return jsonify({'error': 'Page not found'}), 404
     
     @app.errorhandler(500)
     def internal_error(error):
-        return render_template('errors/500.html'), 500
+        return jsonify({'error': 'Internal server error'}), 500
     
     @app.errorhandler(HTTPException)
     def handle_exception(error):
